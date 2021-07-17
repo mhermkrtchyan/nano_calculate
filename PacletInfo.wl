@@ -1,19 +1,20 @@
 Paclet[
 	<|
-    	"Name" -> "QDsTool",
+    	"Name" -> "NanoCalculate",
     	"Version" -> "1.0",
-    	"Description" -> "Paclet calculate some QD properties",
+    	"Description" -> "Paclet calculate main QD properties",
     	"WolframVersion" -> "12.1+",
     	"Extensions" -> {
         	{
         		"Kernel",
         		Root -> "Kernel",
         		Context -> {
-                    "Tool`Dependencies`",
-                    "Tool`Eigensystems`",
+                    "Tool`Thermodynamics`",
+                    "Tool`Optics`",
+                    "Tool`Helpers`",
                     "Tool`Potentials`",
-                    "Tool`Semiconductors`",
-					"Tool`Helpers`",
+					"Tool`Eigensystems`",
+					"Tool`Semiconductors`",
                     "Tool`Constants`"					
 				}
         	}
