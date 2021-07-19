@@ -20,8 +20,8 @@ Needs["Tool`Helpers`"];
 ClearAll[$$FailureFunctionSignature];
 $$FailureFunctionSignature = Tool`Helpers`Private`$FailureFunctionSignature;
 
-ClearAll[JouleToEV];
-JouleToEV                  = Tool`Helpers`Private`$JouleToEV;
+ClearAll[$JouleToEV];
+$JouleToEV                  = Tool`Helpers`Private`$JouleToEV;
 
 Needs["Tool`Eigensystems`"];
 
@@ -60,7 +60,7 @@ GetThermodynamicParameterTemperatureDependecy[semiconductor_, sizes_, interactio
 				temperature = Global`temperature
 			},
 
-			inverseTemperature = JouleToEV[BoltzmannConstantSI * temperature]^-1;
+			inverseTemperature = $JouleToEV[BoltzmannConstantSI * temperature]^-1;
 
 			partitionFunction = Times[
 				Exp[-inverseTemperature * eigensystem["Ground"]],
@@ -76,18 +76,18 @@ GetThermodynamicParameterTemperatureDependecy[semiconductor_, sizes_, interactio
 				partitionFunction
 				,
 				"MeanEnergy",
-				JouleToEV[
+				$JouleToEV[
 					BoltzmannConstantSI  * temperature^2 * D[Log @ partitionFunction, temperature]
 				] 
 				,
 				"FreeEnergy",
-				-JouleToEV[
+				-$JouleToEV[
 					BoltzmannConstantSI * temperature * Log @ partitionFunction
 				]
 				,
 				"Entropy",
 				-D[
-					-JouleToEV[
+					-$JouleToEV[
 						BoltzmannConstantSI * temperature * Log @ partitionFunction
 					],
 					temperature
@@ -95,7 +95,7 @@ GetThermodynamicParameterTemperatureDependecy[semiconductor_, sizes_, interactio
 				,
 				"HeatCapacity",
 				D[
-					JouleToEV[
+					$JouleToEV[
 						BoltzmannConstantSI  * temperature^2 * D[Log @ partitionFunction, temperature]
 					],
 					temperature
@@ -128,7 +128,7 @@ GetThermodynamicParameterSizeDependecy[semiconductor_, absoluteTemperature_, int
 				{COMNumber, RelNumber}
 			][gas];
 
-			inverseTemperature = JouleToEV[BoltzmannConstantSI * temperature]^-1;
+			inverseTemperature = $JouleToEV[BoltzmannConstantSI * temperature]^-1;
 
 			partitionFunction = Times[
 				Exp[-inverseTemperature * eigensystem["Ground"]],
@@ -149,7 +149,7 @@ GetThermodynamicParameterSizeDependecy[semiconductor_, absoluteTemperature_, int
 				,
 				"MeanEnergy",
 				ReplaceAll[
-					JouleToEV[
+					$JouleToEV[
 						BoltzmannConstantSI  * temperature^2 * D[Log @ partitionFunction, temperature]
 					]
 					,
@@ -158,7 +158,7 @@ GetThermodynamicParameterSizeDependecy[semiconductor_, absoluteTemperature_, int
 				,
 				"FreeEnergy",
 				ReplaceAll[
-					-JouleToEV[
+					-$JouleToEV[
 						BoltzmannConstantSI * temperature * Log @ partitionFunction
 					]
 					,
@@ -168,7 +168,7 @@ GetThermodynamicParameterSizeDependecy[semiconductor_, absoluteTemperature_, int
 				"Entropy",
 				ReplaceAll[
 					-D[
-						-JouleToEV[
+						-$JouleToEV[
 							BoltzmannConstantSI * temperature * Log @ partitionFunction
 						],
 						temperature
@@ -180,7 +180,7 @@ GetThermodynamicParameterSizeDependecy[semiconductor_, absoluteTemperature_, int
 				"HeatCapacity",
 				ReplaceAll[
 					D[
-						JouleToEV[
+						$JouleToEV[
 							BoltzmannConstantSI  * temperature^2 * D[Log @ partitionFunction, temperature]
 						],
 						temperature

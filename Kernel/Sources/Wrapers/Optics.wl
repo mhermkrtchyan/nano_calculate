@@ -35,8 +35,8 @@ ClearAll[$$FailureFunctionSignature, $$FailureQuantumNumber];
 $$FailureFunctionSignature = Tool`Helpers`Private`$FailureFunctionSignature;
 $$FailureQuantumNumber     = Tool`Helpers`Private`$FailureQuantumNumber; 
 
-ClearAll[JouleToEV, GaussDistribution];
-JouleToEV                  = Tool`Helpers`Private`$JouleToEV;
+ClearAll[$JouleToEV, GaussDistribution];
+$JouleToEV                  = Tool`Helpers`Private`$JouleToEV;
 GaussDistribution          = Tool`Helpers`Private`$GaussDistribution;
 
 Needs["Tool`Eigensystems`"];
@@ -98,8 +98,8 @@ InterbandAbsorptionCoefficient[Model_, Hole_, InitialState_, FinalState_, Electr
 
 		DeltaEnergy = (ElectronEnergy + HoleEnergy + GapEnergy)  * 10^3;
 		
-		Chemicalpotential = - (GapEnergy/2) + (3/4) * JouleToEV[BoltzmannConstantSI * temperature] * Log[EffectiveMass["Heavy Hole"] / EffectiveMass["Electron"]];
-		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / JouleToEV[BoltzmannConstantSI * temperature]]) &;
+		Chemicalpotential = - (GapEnergy/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[EffectiveMass["Heavy Hole"] / EffectiveMass["Electron"]];
+		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
 		Linewidth = 0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2 ;
 		
 		With[
@@ -174,8 +174,8 @@ PhotoluminescenceCoefficient[Model_, ElectricField_, MagneticField_, temperature
 
 		Times[
 			LightEnergy * absorption,
-			Exp[-(LightEnergy - 10^3 * Gap)/(10^3 * JouleToEV[BoltzmannConstantSI * temperature])],
-			Exp[(0.5 - Gap)/(JouleToEV[BoltzmannConstantSI * temperature])]
+			Exp[-(LightEnergy - 10^3 * Gap)/(10^3 * $JouleToEV[BoltzmannConstantSI * temperature])],
+			Exp[(0.5 - Gap)/($JouleToEV[BoltzmannConstantSI * temperature])]
 		]
 	];
 PhotoluminescenceCoefficient[___] := $$FailureFunctionSignature["Dependencies`Private`PhotoluminescenceCoefficient"];
@@ -268,8 +268,8 @@ IntrabandAbsorptionCoefficient[Model_, ElectricField_, MagneticField_, InitialSt
 
 		DeltaEnergy = Abs[Electron2Energy - Electron1Energy]  * 10^3;
 		
-		Chemicalpotential = - (Gap/2) + (3/4) * JouleToEV[BoltzmannConstantSI * temperature] * Log[Mass["Heavy Hole"] / Mass["Electron"]];
-		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / JouleToEV[BoltzmannConstantSI * temperature]]) &;
+		Chemicalpotential = - (Gap/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[Mass["Heavy Hole"] / Mass["Electron"]];
+		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
 		Linewidth = 0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2 ;
 		
 		LinearConstant = Divide[
@@ -283,7 +283,7 @@ IntrabandAbsorptionCoefficient[Model_, ElectricField_, MagneticField_, InitialSt
 		];
 
 		NonLinearConstant = 10^6 * Nest[
-			JouleToEV,
+			$JouleToEV,
 			Divide[
 				- Radius["Electron"]^4 * ElectronChargeSI^4 * 2*ElectronsPopulation * Intensity,
 				PlanckConstantSI * VacuumPremittivitySI^2 * DielectricConstant[Model["Parameters", "Semiconductor"]] * SpeedOfLightSI^2 * InfraredRefractiveIndex
@@ -383,11 +383,11 @@ SecondHarmonicGeneration[Model_, ElectricField_, MagneticField_, NumbersElectron
 		DeltaEnergy12 = Abs[Electron2Energy - Electron1Energy]  * 10^3;
 		DeltaEnergy13 = Abs[Electron3Energy - Electron1Energy]  * 10^3;
 		
-		Chemicalpotential = - (Gap/2) + (3/4) * JouleToEV[BoltzmannConstantSI * temperature] * Log[Mass["Heavy Hole"] / Mass["Electron"]];
-		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / JouleToEV[BoltzmannConstantSI * temperature]]) &;
+		Chemicalpotential = - (Gap/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[Mass["Heavy Hole"] / Mass["Electron"]];
+		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
 		Linewidth = 0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2 ;
 		
-		LinearConstant = 10^6 * Nest[JouleToEV, Radius["Electron"]^3 * ElectronChargeSI^3 * ElectronsPopulation / VacuumPremittivitySI, 2];
+		LinearConstant = 10^6 * Nest[$JouleToEV, Radius["Electron"]^3 * ElectronChargeSI^3 * ElectronsPopulation / VacuumPremittivitySI, 2];
 
 		shg = Times[
 			LinearConstant * FermiDirac[Electron1Energy] * (1 - FermiDirac[Electron2Energy]) * (1 - FermiDirac[Electron3Energy]),
@@ -498,11 +498,11 @@ ThirdHarmonicGeneration[Model_, ElectricField_, MagneticField_, NumbersElectron1
 		DeltaEnergy14 = Abs[Electron4Energy - Electron1Energy]  * 10^3;
 
 				
-		Chemicalpotential = - (Gap/2) + (3/4) * JouleToEV[BoltzmannConstantSI * temperature] * Log[Mass["Heavy Hole"] / Mass["Electron"]];
-		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / JouleToEV[BoltzmannConstantSI * temperature]]) &;
+		Chemicalpotential = - (Gap/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[Mass["Heavy Hole"] / Mass["Electron"]];
+		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
 		Linewidth = 0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2 ;
 		
-		LinearConstant = 10^9 * Nest[JouleToEV, Radius["Electron"]^4 * ElectronChargeSI^4 * ElectronsPopulation / VacuumPremittivitySI, 3];
+		LinearConstant = 10^9 * Nest[$JouleToEV, Radius["Electron"]^4 * ElectronChargeSI^4 * ElectronsPopulation / VacuumPremittivitySI, 3];
 		
 		thg = Times[
 			LinearConstant * FermiDirac[Electron1Energy] * (1 - FermiDirac[Electron2Energy]) * (1 - FermiDirac[Electron3Energy]) * (1 - FermiDirac[Electron4Energy]),

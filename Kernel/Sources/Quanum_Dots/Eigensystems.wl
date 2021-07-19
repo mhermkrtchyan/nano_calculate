@@ -13,32 +13,32 @@ Begin["`Private`"];
 Needs["Tool`Constants`"];
 
 ClearAll[$$PlanckConstantSI, $$ElectronChargeSI, $$ElectronChargeCGS, $$SpeedOfLightSI, $$ElectronChargeSI, $$VacuumPremittivitySI];
-$$PlanckConstantSI         	= Tool`Constants`Private`$$PlanckConstantSI;
-$$ElectronChargeSI         	= Tool`Constants`Private`$$ElectronChargeSI;
-$$ElectronChargeCGS        	= Tool`Constants`Private`$$ElectronChargeCGS;
-$$SpeedOfLightSI           	= Tool`Constants`Private`$$SpeedOfLightSI;
-$$VacuumPremittivitySI     	= Tool`Constants`Private`$$VacuumPremittivitySI;
+$$PlanckConstantSI		= Tool`Constants`Private`$$PlanckConstantSI;
+$$ElectronChargeSI		= Tool`Constants`Private`$$ElectronChargeSI;
+$$ElectronChargeCGS		= Tool`Constants`Private`$$ElectronChargeCGS;
+$$SpeedOfLightSI		= Tool`Constants`Private`$$SpeedOfLightSI;
+$$VacuumPremittivitySI	= Tool`Constants`Private`$$VacuumPremittivitySI;
 
 Needs["Tool`Semiconductors`"];
 
 ClearAll[$EffectiveMass, $BohrRadius, $RydbergEnergy, $DielectricConstant];
-$EffectiveMass              = Tool`Semiconductors`Private`$EffectiveMass;
-$BohrRadius        		    = Tool`Semiconductors`Private`$BohrRadius;
-$RydbergEnergy              = Tool`Semiconductors`Private`$RydbergEnergy;
-$DielectricConstant         = Tool`Semiconductors`Private`$DielectricConstant;
+$EffectiveMass			= Tool`Semiconductors`Private`$EffectiveMass;
+$BohrRadius				= Tool`Semiconductors`Private`$BohrRadius;
+$RydbergEnergy			= Tool`Semiconductors`Private`$RydbergEnergy;
+$DielectricConstant		= Tool`Semiconductors`Private`$DielectricConstant;
 
 
 Needs["Tool`Helpers`"];
 
 ClearAll[$FailureFunctionSignature, $FailureQuantumNumber];
-$$FailureFunctionSignature 	= Tool`Helpers`Private`$FailureFunctionSignature;
-$$FailureQuantumNumber     	= Tool`Helpers`Private`$FailureQuantumNumber;
+$$FailureFunctionSignature	= Tool`Helpers`Private`$FailureFunctionSignature;
+$$FailureQuantumNumber		= Tool`Helpers`Private`$FailureQuantumNumber;
 
 ClearAll[$$StorageDir];
 $$EigensystemDir			= Tool`Helpers`Private`$$EigensystemDir;
 
-ClearAll[JouleToEV];
-JouleToEV                  	= Tool`Helpers`Private`$JouleToEV;
+ClearAll[$JouleToEV];
+$JouleToEV					= Tool`Helpers`Private`$JouleToEV;
 
 Needs["Tool`Potentials`"];
 
@@ -105,7 +105,7 @@ tempStronglyProlateConicalQuantumDot[Semiconductor_, BaseRadius_, Height_, {Elec
 			] &;
 
 			radialEigensystem = {
-				JouleToEV[
+				$JouleToEV[
 					PlanckConstantSI^2 * BesselJZero[MagneticNumber, RadialNumber]^2 / (2 * EffectiveMass[#] * BohrRadius[#]^2 * BaseRadius^2)
 				]
 				,
@@ -226,13 +226,13 @@ tempStronglyOblateConicalQuantumDot[Semiconductor_, BaseRadius_, Height_, {Elect
 			},
 
 			axialEigensystem = {
-				JouleToEV[Pi^2 * PlanckConstantSI^2 * AxialNumber / (2 * EffectiveMass[#] * BohrRadius[#]^2 * Height^2)]
+				$JouleToEV[Pi^2 * PlanckConstantSI^2 * AxialNumber / (2 * EffectiveMass[#] * BohrRadius[#]^2 * Height^2)]
 				,
 				Sqrt[2/(Height * (1 - 0.1))] * Sin[Pi * AxialNumber * z /(Height * (1 - 0.1))]
 			} &;
 
 			radialEigensystem = {
-				JouleToEV[
+				$JouleToEV[
 					Plus[
 						PlanckConstantSI^2 * N @ BesselJZero[MagneticNumber, RadialNumber]^2 / (2 * EffectiveMass[#] * BohrRadius[#]^2 * BaseRadius^2),
 						Times[
@@ -375,14 +375,14 @@ tempStronglyProlateEllipsoidalQuantumDotWithMoshinsky1D[Semiconductor_, SemiAxes
 			},
 		
 			groundEnergy =
-				JouleToEV @ Divide[
+				$JouleToEV @ Divide[
 					ParticlesNumber * PlanckConstantSI^2,
 					4 * EffectiveMass[#] * BohrRadius[#]^2 * Min @ SemiAxes^2
 				] &;
 			
-			centerOfMassEnergy = JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * (COMNumber + 1/2)] &;
+			centerOfMassEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * (COMNumber + 1/2)] &;
 		
-			relativeEnergy = JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * Min @ Last @ Moshinsky[#] * (RelNumber + (ParticlesNumber - 1) / 2)] &;
+			relativeEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * Min @ Last @ Moshinsky[#] * (RelNumber + (ParticlesNumber - 1) / 2)] &;
 
 			waveFunction = Times[
 				1/Sqrt[2^COMNumber * COMNumber!] * (1/Pi) ^ 0.25 * Exp[-Sqrt[ParticlesNumber]^2 * z^2 / 2] * HermiteH[COMNumber, Sqrt[ParticlesNumber] * z]
@@ -545,12 +545,12 @@ tempBiconvexLensQuantumDot[Semiconductor_, Radiuses_, Heights_, {ElectricField_,
 			MagneticLength = Sqrt[PlanckConstantSI/(EffectiveMass[#] * problemFrequency[#])] &;
 
 			axialEigensystem = {
-				JouleToEV[Pi^2 * PlanckConstantSI^2 * AxialNumber^2 / (2 * EffectiveMass[#] * (heightBig[#] + heightSmall[#])^2)],
+				$JouleToEV[Pi^2 * PlanckConstantSI^2 * AxialNumber^2 / (2 * EffectiveMass[#] * (heightBig[#] + heightSmall[#])^2)],
 				Sqrt[2 * BohrRadius[#] / wellDepth[#]] * Sin[Pi * AxialNumber / wellDepth[#] * (dimZ[#] + Sqrt[radiusSmall[#]^2 - dimR[#]^2] + heightSmall[#] - radiusSmall[#])]
 			} &;
 
 			radialEigensystem = {
-				JouleToEV[PlanckConstantSI * problemFrequency[#] * (2*RadialNumber+Abs[MagneticNumber]+1) + PlanckConstantSI*cyclotronFrequency[#] * MagneticNumber/2],
+				$JouleToEV[PlanckConstantSI * problemFrequency[#] * (2*RadialNumber+Abs[MagneticNumber]+1) + PlanckConstantSI*cyclotronFrequency[#] * MagneticNumber/2],
 				Times[
 					1/Sqrt[2*Pi] * Exp[I*MagneticNumber*angle],
 					Sqrt[(Abs @ MagneticNumber + RadialNumber)!/(2^Abs[MagneticNumber] * RadialNumber! * Abs[MagneticNumber]!)],
@@ -687,7 +687,7 @@ tempCylindricalQDsWithDoubleMorse[Semiconductor_, Depths_, HalfWidths_, WellDist
 			
 			radialEigensystem =
 				{
-					JouleToEV[Pi^2 * PlanckConstantSI^2 * RadialNumber^2 / (2 * EffectiveMass[#] * BohrRadius[#]^2 * cylindricalQDDiameter^2)],
+					$JouleToEV[Pi^2 * PlanckConstantSI^2 * RadialNumber^2 / (2 * EffectiveMass[#] * BohrRadius[#]^2 * cylindricalQDDiameter^2)],
 					Sqrt[2 / cylindricalQDDiameter] * Sin[Pi * RadialNumber * r / cylindricalQDDiameter]
 				} &;
 
@@ -801,7 +801,7 @@ CylindricalQDsWithDoubleMorseImpurityVariation[semiconductor_, depths_, halfWidt
 			nonimpurityHamiltonian = -Laplacian[#, {r}] - 1/r * D[#, r] - Laplacian[#, {angle}]/r^2 - Laplacian[#, {z}] + confinementPotential * # &;
 	
 			impurityCoordinates = Sqrt[r^2 + rImpurity^2 - r * rImpurity * Cos[angle] + (z - zImpurity)^2];
-			impurityHamiltonian = - 1/Rydberg * JouleToEV[ElectronChargeSI^2 / (4 * Pi * $DielectricConstant * VacuumPremittivitySI)] / impurityCoordinates * # &;
+			impurityHamiltonian = - 1/Rydberg * $JouleToEV[ElectronChargeSI^2 / (4 * Pi * $DielectricConstant * VacuumPremittivitySI)] / impurityCoordinates * # &;
 
 			totalHamiltonian = nonimpurityHamiltonian[#] + impurityHamiltonian[#] &;
 
@@ -866,11 +866,11 @@ CylindricalQDsWithDoubleMorseImpurityHeisenberg[semiconductor_, depths_, halfWid
 
 		nonImpurityEnergy = First@eigensystem["Electron", "Axial"] + First@eigensystem["Electron", "Radial"];
 
-		impurityEnergy = - JouleToEV[ElectronChargeSI^2 / (4 * Pi * $DielectricConstant * VacuumPremittivitySI * Radius["Electron"])];
+		impurityEnergy = - $JouleToEV[ElectronChargeSI^2 / (4 * Pi * $DielectricConstant * VacuumPremittivitySI * Radius["Electron"])];
 
-		axial = JouleToEV[PlanckConstantSI^2/(realtiveMass * Radius["Electron"]^2 * (0.5 cylindricalQDDiameter)^2)];
+		axial = $JouleToEV[PlanckConstantSI^2/(realtiveMass * Radius["Electron"]^2 * (0.5 cylindricalQDDiameter)^2)];
 
-		radial = JouleToEV[PlanckConstantSI^2/(realtiveMass * Radius["Electron"]^2 * cylindricalQDLength^2)];
+		radial = $JouleToEV[PlanckConstantSI^2/(realtiveMass * Radius["Electron"]^2 * cylindricalQDLength^2)];
 
 		impurityEnergy = nonImpurityEnergy + axial + radial + impurityEnergy;
 
