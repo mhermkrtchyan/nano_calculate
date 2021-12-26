@@ -1,15 +1,6 @@
 BeginPackage["Tool`Constants`"];
 Begin["`Private`"];
 
-(*
-	 ██████╗ ██████╗ ███╗   ██╗███████╗████████╗ █████╗ ███╗   ██╗████████╗███████╗
-	██╔════╝██╔═══██╗████╗  ██║██╔════╝╚══██╔══╝██╔══██╗████╗  ██║╚══██╔══╝██╔════╝
-	██║     ██║   ██║██╔██╗ ██║███████╗   ██║   ███████║██╔██╗ ██║   ██║   ███████╗
-	██║     ██║   ██║██║╚██╗██║╚════██║   ██║   ██╔══██║██║╚██╗██║   ██║   ╚════██║
-	╚██████╗╚██████╔╝██║ ╚████║███████║   ██║   ██║  ██║██║ ╚████║   ██║   ███████║
-	 ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝
-*)
-
 ClearAll[$$ElectronChargeSI, $$PlanckConstantSI, $$ElectronMassSI, $$BoltzmannConstantSI, $$SpeedOfLightSI, $$VacuumPremittivitySI];
 $$ElectronChargeSI		= Quantity[1.602*10^-19	, "Coulombs"				];
 $$PlanckConstantSI		= Quantity[1.054*10^-34	, "Joules"*"Seconds"		];
