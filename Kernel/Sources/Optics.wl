@@ -55,39 +55,37 @@ StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D = Tool`Eigensystems`Private`
 *)
 
 ClearAll[InterbandAbsorptionCoefficient];
-InterbandAbsorptionCoefficient[Model_, Hole_, InitialState_, FinalState_, ElectricField_, MagneticField_, temperature_] :=
+InterbandAbsorptionCoefficient[InitialState_, FinalState_, Hole_, temperature_] :=
 	Catch @ Block[
 		{
 			BoltzmannConstantSI = QuantityMagnitude @ $$BoltzmannConstantSI,
-			EffectiveMass 		= QuantityMagnitude @ $EffectiveMass[Model["Semiconductor"], #] &,
-			GapEnergy 			= QuantityMagnitude @ $GapEnergy[Model["Semiconductor"], temperature],
+			EffectiveMass 		= QuantityMagnitude @ $EffectiveMass[InitialState["Semiconductor"], #] &,
+			GapEnergy 			= QuantityMagnitude @ $GapEnergy[InitialState["Semiconductor"], temperature],
+			BohrRadius 			= QuantityMagnitude @ $BohrRadius[InitialState["Semiconductor"], #] &
+			,
 			ElectronModel, HoleModel, ElectronWaveFunction, HoleWaveFunction, ElectronEnergy, HoleEnergy,
 			MatrixElement, DeltaEnergy, Chemicalpotential, FermiDirac, Linewidth, AbsorptionCoefficient
 		},
 
-		{MagneticNumberElectron, RadialNumberElectron, AxialNumberElectron} = FinalState;
+		HoleModel = InitialState[Hole];
+		HoleWaveFunction = ReplaceAll[
+			HoleModel["Axial", "WaveFunction"] * HoleModel["Radial", "WaveFunction"],
+			Global`r -> Max[InitialState["Geometry", "Radial"]] * BohrRadius[Hole]
+		];
+		HoleEnergy = HoleModel["Axial", "Energy"] + HoleModel["Radial", "Energy"];
 
-		{MagneticNumberHole, RadialNumberHole, AxialNumberHole} = InitialState;
-
-		ElectronModel = Model["Eigensystem"][{ElectricField, MagneticField}][{MagneticNumberElectron, RadialNumberElectron, AxialNumberElectron}]["Electron"];
+		ElectronModel = FinalState["Electron"];
 		ElectronWaveFunction = ReplaceAll[
 			ElectronModel["Axial", "WaveFunction"] * ElectronModel["Radial", "WaveFunction"],
-			r -> Max @ Model["Geometry", "Radial"]
+			Global`r -> Max[FinalState["Geometry", "Radial"]] * BohrRadius["Electron"]
 		];
 		ElectronEnergy = ElectronModel["Axial", "Energy"] + ElectronModel["Radial", "Energy"];
 
-		HoleModel = Model["Eigensystem"][{ElectricField, MagneticField}][{MagneticNumberHole, RadialNumberHole, AxialNumberHole}][Hole];
-		HoleWaveFunction = ReplaceAll[
-			HoleModel["Axial", "WaveFunction"] * HoleModel["Radial", "WaveFunction"],
-			r -> Max @ Model["Geometry", "Radial"]
-		];
-		HoleEnergy = HoleModel["Axial", "Energy"] + HoleModel["Radial", "Energy"];
-		
 		MatrixElement = Abs @ Integrate[
 			2*Pi * HoleWaveFunction * ElectronWaveFunction,
 			Prepend[
-				Model["Geometry", "Axial"],
-				z
+				InitialState["Geometry", "Axial"],
+				Global`z
 			]
 		];
 
@@ -95,6 +93,7 @@ InterbandAbsorptionCoefficient[Model_, Hole_, InitialState_, FinalState_, Electr
 		
 		Chemicalpotential = - (GapEnergy/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[EffectiveMass["Heavy Hole"] / EffectiveMass["Electron"]];
 		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
+		
 		Linewidth = 0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2 ;
 		
 		With[
@@ -112,59 +111,36 @@ InterbandAbsorptionCoefficient[Model_, Hole_, InitialState_, FinalState_, Electr
 InterbandAbsorptionCoefficient[___] := $$FailureFunctionSignature["Dependencies`Private`InterbandAbsorptionCoefficient"];
 
 ClearAll[InterbandAbsorptionEdge];
-InterbandAbsorptionEdge[Model_, Hole_, InitialState_, FinalState_, ElectricField_, MagneticField_, temperature_] :=
+InterbandAbsorptionEdge[InitialState_, FinalState_, Hole_, temperature_] :=
 	Catch @ Block[
 		{
-			GapEnergy = QuantityMagnitude @ $GapEnergy[Model["Semiconductor"], temperature],
-
-			ElectronFull, HoleFull
+			GapEnergy = QuantityMagnitude @ $GapEnergy[InitialState["Semiconductor"], temperature]
+			,
+			HoleModel, HoleEnergy, ElectronModel, ElectronEnergy
 		},
 
-		{MagneticNumberElectron, RadialNumberElectron, AxialNumberElectron} = FinalState;
-
-		{MagneticNumberHole, RadialNumberHole, AxialNumberHole} = InitialState;
-
-		ElectronModel = Model["Eigensystem"][{ElectricField, MagneticField}][{MagneticNumberElectron, RadialNumberElectron, AxialNumberElectron}]["Electron"];
-		ElectronEnergy = ElectronModel["Axial", "Energy"] + ElectronModel["Radial", "Energy"];
-
-		HoleModel = Model["Eigensystem"][{ElectricField, MagneticField}][{MagneticNumberHole, RadialNumberHole, AxialNumberHole}][Hole];
+		HoleModel = InitialState[Hole];
 		HoleEnergy = HoleModel["Axial", "Energy"] + HoleModel["Radial", "Energy"];
+
+		ElectronModel = FinalState["Electron"];
+		ElectronEnergy = ElectronModel["Axial", "Energy"] + ElectronModel["Radial", "Energy"];
 		
 		ElectronEnergy + HoleEnergy + GapEnergy
 	];
 InterbandAbsorptionEdge[___] := $$FailureFunctionSignature["Dependencies`Private`InterbandAbsorptionEdge"];
 
 ClearAll[PhotoluminescenceCoefficient];
-PhotoluminescenceCoefficient[Model_, ElectricField_, MagneticField_, temperature_] :=
+PhotoluminescenceCoefficient[InitialState_, FinalState_, Hole_, temperature_] :=
 	Catch @ Block[
 		{
 			BoltzmannConstantSI = QuantityMagnitude @ $$BoltzmannConstantSI,
-			Mass = QuantityMagnitude @ EffectiveMass[Model["Parameters", "Semiconductor"], #] &,
-			Gap = QuantityMagnitude @ $GapEnergy[Model["Parameters", "Semiconductor"]]
+			Mass 				= QuantityMagnitude @ EffectiveMass[InitialState["Semiconductor"], #] &,
+			Gap 				= QuantityMagnitude @ $GapEnergy[InitialState["Semiconductor"], temperature]
 		},
-
-		If[ElectricField > 10 || ElectricField < 0,
-			Throw[$$FailureQuantumNumber[0, 10, "Electric Field (kV/cm)"]]
-		];
-
-		If[MagneticField > 10 || MagneticField < 0,
-			Throw[$$FailureQuantumNumber[0, 10, "Magnetic Field (T)"]]
-		];
-
-		If[temperature > 300 || temperature < 0 || !IntegerQ[temperature],
-			Throw[$$FailureQuantumNumber[0, 300, "temperature (K)"]]
-		];
-
-		ElectronModel = Model[{ElectricField, MagneticField}][{MagneticFieldElectron, RadialNumberElectron, AxialNumberElectron}]["Electron"];
-		ElectronEnergy = First@ElectronModel["Axial"] + First@ElectronModel["Radial"];
-
-		HoleModel = Model[{ElectricField, MagneticField}][{MagneticFieldHole, RadialNumberHole, AxialNumberHole}]["Light Hole"];
-		HoleEnergy = First@HoleModel["Axial"] + First@HoleModel["Radial"];
 
 		absorption = 
 			Simplify @ Plus @@ Map[
-				InterbandAbsorptionCoefficient[Model, ElectricField, MagneticField, #, Abs @ #, temperature] &,
-				Tuples[{{0, -1, 1}, {0, 1}, {1, 2, 3, 4}}]
+				InterbandAbsorptionCoefficient[InitialState, FinalState, Hole, temperature]
 			];
 
 		Times[
@@ -183,32 +159,21 @@ ClearAll[IntrabandAbsorptionCoefficient];
 IntrabandAbsorptionCoefficient[Model_, ElectricField_, MagneticField_, InitialState_, FinalState_, temperature_] :=
 	Catch @ Block[
 		{
-			BoltzmannConstantSI = QuantityMagnitude @ $$BoltzmannConstantSI, PlanckConstantSI = QuantityMagnitude @ $$PlanckConstantSI,
-			VacuumPremittivitySI = QuantityMagnitude @ $$VacuumPremittivitySI, ElectronChargeSI = QuantityMagnitude @ $$ElectronChargeSI,
-			SpeedOfLightSI = QuantityMagnitude @ $$SpeedOfLightSI,
-			Intensity = 10^8, ElectronsPopulation = 3 * 10^22, InfraredRefractiveIndex = 3.51,
-			Radius = QuantityMagnitude @ BohrRadius[Model["Parameters", "Semiconductor"], #] &,
-			Mass = QuantityMagnitude @ EffectiveMass[Model["Parameters", "Semiconductor"], #] &,
-			Gap = QuantityMagnitude @ $GapEnergy[Model["Parameters", "Semiconductor"]],
+			BoltzmannConstantSI 	= QuantityMagnitude @ $$BoltzmannConstantSI,
+			PlanckConstantSI 		= QuantityMagnitude @ $$PlanckConstantSI,
+			VacuumPremittivitySI 	= QuantityMagnitude @ $$VacuumPremittivitySI,
+			ElectronChargeSI 		= QuantityMagnitude @ $$ElectronChargeSI,
+			SpeedOfLightSI 			= QuantityMagnitude @ $$SpeedOfLightSI,
+			Radius 					= QuantityMagnitude @ BohrRadius[Model["Parameters", "Semiconductor"], #] &,
+			Mass 					= QuantityMagnitude @ EffectiveMass[Model["Parameters", "Semiconductor"], #] &,
+			Gap 					= QuantityMagnitude @ $GapEnergy[Model["Parameters", "Semiconductor"]]
+			,
+			Intensity = 10^8, ElectronsPopulation = 3 * 10^22, InfraredRefractiveIndex = 3.51
+			,
 			Electron1Model, Electron2Model, Electron1WaveFunction, Electron2WaveFunction, Electron1Energy, Electron2Energy,
 			MatrixElement12, MatrixElement11, MatrixElement22, DeltaEnergy, Chemicalpotential, FermiDirac, Linewidth,
 			LinearConstant, NonLinearConstant, LinearAbsorptionCoefficient, NonLinearAbsorptionCoefficient
 		},
-
-		{MagneticFieldElectron1, RadialNumberElectron1, AxialNumberElectron1} = InitialState;
-		{MagneticFieldElectron2, RadialNumberElectron2, AxialNumberElectron2} = FinalState;
-
-		If[ElectricField > 10 || ElectricField < 0 || !IntegerQ[ElectricField],
-			Throw[$$FailureQuantumNumber[0, 10, "Electric Field (kV/cm)"]]
-		];
-
-		If[MagneticField > 10 || MagneticField < 0 || !IntegerQ[MagneticField],
-			Throw[$$FailureQuantumNumber[0, 10, "Magnetic Field (T)"]]
-		];
-
-		If[temperature > 300 || temperature < 0 || !IntegerQ[temperature],
-			Throw[$$FailureQuantumNumber[0, 300, "temperature (K)"]]
-		];
 
 		Electron1Model = Model[{ElectricField, MagneticField}][{MagneticFieldElectron1, RadialNumberElectron1, AxialNumberElectron1}]["Electron"];
 		Electron1WaveFunction = Last@Electron1Model["Axial"] * Last@Electron1Model["Radial"] /. Eigensystems`Private`r -> 1;

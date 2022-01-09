@@ -51,7 +51,7 @@ MoshinskyConfiniment       	= Tool`Potentials`Private`MoshinskyConfiniment;
 MoshinskyConfiniment2		= Tool`Potentials`Private`MoshinskyConfiniment2;
 
 (*
-	Conical Quantum Dot
+	Strongly Prolate Conical Quantum Dot
 *)
 
 ClearAll[StronglyProlateConicalQuantumDot];
@@ -123,6 +123,10 @@ StronglyProlateConicalQuantumDot[Semiconductor_, BaseRadius_, Height_, {Electric
 		]
 	];
 StronglyProlateConicalQuantumDot[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`StronglyProlateConicalQuantumDot"];
+
+(*
+	Strongly Oblate Conical Quantum Dot
+*)
 
 ClearAll[StronglyOblateConicalQuantumDot];
 StronglyOblateConicalQuantumDot[Semiconductor_, BaseRadius_, Height_, {ElectricField_, MagneticField_}, {MagneticNumber_, RadialNumber_, AxialNumber_}] :=
@@ -209,7 +213,7 @@ StronglyOblateConicalQuantumDot[Semiconductor_, BaseRadius_, Height_, {ElectricF
 StronglyOblateConicalQuantumDot[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`StronglyOblateConicalQuantumDot"];
 
 (*
-	Ellipsoidal Quantum Dot: 1D Moshinsky Impurity
+	Strongly Prolate Ellipsoidal Quantum Dot: 1D Moshinsky
 *)
 
 ClearAll[StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D];
@@ -269,7 +273,7 @@ StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D[Semiconductor_, SemiAxes_, I
 StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D"];
 
 (*
-	Lens-Shaped Quantum Dot
+	Asymmetric Biconvex Lens-Shaped Quantum Dot
 *)
 
 ClearAll[BiconvexLensQuantumDot];
@@ -279,12 +283,11 @@ BiconvexLensQuantumDot[Semiconductor_, Radiuses_, Heights_, {ElectricField_, Mag
 			PlanckConstantSI 	= QuantityMagnitude @ $$PlanckConstantSI,
 			ElectronChargeCGS 	= QuantityMagnitude @ $$ElectronChargeCGS,
 			SpeedOfLightSI 		= QuantityMagnitude @ $$SpeedOfLightSI,
-			
 			EffectiveMass 		= QuantityMagnitude @ $EffectiveMass[Semiconductor, #] &,
-			BohrRadius 			= QuantityMagnitude @ $BohrRadius[Semiconductor, #] &,
-			
-			hB = Max @ Heights, hS = Min @ Heights, rB = Max @ Radiuses, rS = Min @ Radiuses,
-			
+			BohrRadius 			= QuantityMagnitude @ $BohrRadius[Semiconductor, #] &
+			,
+			hB = Max @ Heights, hS = Min @ Heights, rB = Max @ Radiuses, rS = Min @ Radiuses
+			,
 			heightBig, heightSmall, radiusBig, radiusSmall,
 			cyclotronFrequency, generalFrequency, problemFrequency, wellDepth,
 			axialEigensystem, radialEigensystem, totalEigensystem
@@ -342,9 +345,25 @@ BiconvexLensQuantumDot[Semiconductor_, Radiuses_, Heights_, {ElectricField_, Mag
 				,
 				{"Electron", "Light Hole", "Heavy Hole"}
 			]
+		];
+
+		Append[
+			totalEigensystem,
+			{
+				"Geometry" -> <|
+					"Axial" -> Heights,
+					"Radial" -> Radiuses
+				|>
+				,
+				"Semiconductor" -> Semiconductor
+			}
 		]
 	];
 BiconvexLensQuantumDot[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`BiconvexLensQuantumDot"];
+
+(*
+	Asymmetric Biconvex Lens-Shaped Quantum Dot: 2D Moshinsky
+*)
 
 BiconvexLensQuantumDotWithMoshinsky2D[Semiconductor_, radii_, heights_, Interaction_, ParticlesNumber_, {ElectricField_, MagneticField_}, {COMNumber_, RelNumber_}] :=
 	Catch @ Block[
