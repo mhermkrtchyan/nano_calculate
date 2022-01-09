@@ -8,9 +8,9 @@ Begin["`Private`"];
 Needs["Tool`Constants`"];
 
 ClearAll[$$PlanckConstantSI, $$ElectronChargeSI, $$VacuumPremittivitySI];
-$$PlanckConstantSI			= Tool`Constants`Private`$$PlanckConstantSI;
-$$ElectronChargeSI 			= Tool`Constants`Private`$$ElectronChargeSI;
-$$VacuumPremittivitySI		= Tool`Constants`Private`$$VacuumPremittivitySI;
+$$PlanckConstantSI		= Tool`Constants`Private`$$PlanckConstantSI;
+$$ElectronChargeSI 		= Tool`Constants`Private`$$ElectronChargeSI;
+$$VacuumPremittivitySI	= Tool`Constants`Private`$$VacuumPremittivitySI;
 
 (*
 	Get helpers
@@ -28,8 +28,8 @@ $FailureFunctionSignature	= Tool`Helpers`Private`$FailureFunctionSignature;
 Needs["Tool`Semiconductors`"];
 
 ClearAll[$EffectiveMass, $BohrRadius];
-$EffectiveMass				= Tool`Semiconductors`Private`$EffectiveMass;
-$BohrRadius 				= Tool`Semiconductors`Private`$BohrRadius;
+$EffectiveMass	= Tool`Semiconductors`Private`$EffectiveMass;
+$BohrRadius 	= Tool`Semiconductors`Private`$BohrRadius;
 
 (*
 	Confiniments
@@ -192,6 +192,31 @@ MoshinskyConfiniment[semiconductor_?StringQ, particle_?StringQ, interactionParam
 		{frequency, parameter}
 	];	
 MoshinskyConfiniment[___] := $FailureFunctionSignature["Tool`Potentials`Private`MoshinskyConfiniment"];
+
+ClearAll[MoshinskyConfiniment2];
+MoshinskyConfiniment2[semiconductor_?StringQ, particle_?StringQ, interactionParameter_?NumberQ, radii_?ListQ, heights_?ListQ, particlesNumber_?NumberQ] :=
+	Block[
+		{
+			PlanckConstantSI 	= QuantityMagnitude @ $$PlanckConstantSI,
+			BohrRadius 			= QuantityMagnitude @ $BohrRadius[semiconductor, particle],
+			EffectiveMass   	= QuantityMagnitude @ $EffectiveMass[semiconductor, particle]
+			,
+			frequency, parameter
+		},
+
+		frequency = Sqrt @ Divide[
+			Pi * PlanckConstantSI * BohrRadius * (First @ radii + Last @ radii),
+			BohrRadius^5 * EffectiveMass * First @ radii * Last @ radii * (First @ heights + Last @ heights)^3
+		];
+
+		parameter =
+			Sqrt[
+				1 + 2 * interactionParameter / (EffectiveMass * frequency^2) * particlesNumber
+			];
+
+		{frequency, parameter}
+	];	
+MoshinskyConfiniment2[___] := $FailureFunctionSignature["Tool`Potentials`Private`MoshinskyConfiniment"];
 
 ClearAll[MoshinskyInteraction];
 MoshinskyInteraction[semiconductor_?StringQ, particle_?StringQ, interactionParameter_?NumberQ, particlesDistance_?NumberQ]:=

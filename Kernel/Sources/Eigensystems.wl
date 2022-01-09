@@ -45,9 +45,10 @@ $DielectricConstant		= Tool`Semiconductors`Private`$DielectricConstant;
 
 Needs["Tool`Potentials`"];
 
-ClearAll[DoubleMorseConfinement, MoshinskyConfiniment];
+ClearAll[DoubleMorseConfinement, MoshinskyConfiniment, MoshinskyConfiniment2];
 DoubleMorseConfinement     	= Tool`Potentials`Private`DoubleMorseConfinement;
 MoshinskyConfiniment       	= Tool`Potentials`Private`MoshinskyConfiniment;
+MoshinskyConfiniment2		= Tool`Potentials`Private`MoshinskyConfiniment2;
 
 (*
 	Conical Quantum Dot
@@ -337,6 +338,61 @@ BiconvexLensQuantumDot[Semiconductor_, Radiuses_, Heights_, {ElectricField_, Mag
 					"Radial" -> AssociationThread[
 						{"Energy", "WaveFunction"} -> radialEigensystem[#]
 					]
+				] &
+				,
+				{"Electron", "Light Hole", "Heavy Hole"}
+			]
+		]
+	];
+BiconvexLensQuantumDot[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`BiconvexLensQuantumDot"];
+
+BiconvexLensQuantumDotWithMoshinsky2D[Semiconductor_, radii_, heights_, Interaction_, ParticlesNumber_, {ElectricField_, MagneticField_}, {COMNumber_, RelNumber_}] :=
+	Catch @ Block[
+		{
+			PlanckConstantSI = QuantityMagnitude @ $$PlanckConstantSI,
+			
+			BohrRadius       = QuantityMagnitude @ $BohrRadius[Semiconductor, #] &,
+			EffectiveMass    = QuantityMagnitude @ $EffectiveMass[Semiconductor, #] &,
+			
+			Moshinsky        = MoshinskyConfiniment2[Semiconductor, #, Interaction, radii, heights, ParticlesNumber] &,
+			
+			groundEnergy, centerOfMassEnergy, relativeEnergy, waveFunction, totalEigensystem
+		},
+
+		With[
+			{
+				z = Global`z
+			},
+		
+			groundEnergy =
+				$JouleToEV @ Divide[
+					ParticlesNumber * PlanckConstantSI^2,
+					4 * EffectiveMass[#] * BohrRadius[#]^2 * Min @ heights^2
+				] &;
+			
+			centerOfMassEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * (COMNumber + 1/2)] &;
+		
+			relativeEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * Min @ Last @ Moshinsky[#] * (RelNumber + (ParticlesNumber - 1) / 2)] &;
+
+			waveFunction = Times[
+				1/Sqrt[2^COMNumber * COMNumber!] * (1/Pi) ^ 0.25 * Exp[-Sqrt[ParticlesNumber]^2 * z^2 / 2] * HermiteH[COMNumber, Sqrt[ParticlesNumber] * z]
+				,
+				Times[
+					1/Sqrt[2^RelNumber * RelNumber!] * (Min @ Last[Moshinsky[#]]/Pi) ^ 0.25,
+					Exp[-(Sqrt[(ParticlesNumber - 1)/ParticlesNumber] * z - 1/(ParticlesNumber - 1)*(ParticlesNumber - 1) * z)^2 / 2],
+					HermiteH[RelNumber, Sqrt[Last[Moshinsky[#]]] * (Sqrt[(ParticlesNumber - 1)/ParticlesNumber] * z - 1/(ParticlesNumber - 1) * (ParticlesNumber - 1) * z)]
+				] ^ (ParticlesNumber - 1)
+			] &;
+
+			totalEigensystem = AssociationMap[
+				Association[
+					"Ground" -> 2 * groundEnergy[#]
+					,
+					"CenterOfMass" -> 2 * centerOfMassEnergy[#]
+					,
+					"Relative" -> 2 * relativeEnergy[#]
+					,
+					"WaveFunction" -> waveFunction[#] * waveFunction[#]
 				] &
 				,
 				{"Electron", "Light Hole", "Heavy Hole"}

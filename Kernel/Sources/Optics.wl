@@ -60,8 +60,7 @@ InterbandAbsorptionCoefficient[Model_, Hole_, InitialState_, FinalState_, Electr
 		{
 			BoltzmannConstantSI = QuantityMagnitude @ $$BoltzmannConstantSI,
 			EffectiveMass 		= QuantityMagnitude @ $EffectiveMass[Model["Semiconductor"], #] &,
-			GapEnergy 			= QuantityMagnitude @ $GapEnergy[Model["Semiconductor"], temperature
-			,
+			GapEnergy 			= QuantityMagnitude @ $GapEnergy[Model["Semiconductor"], temperature],
 			ElectronModel, HoleModel, ElectronWaveFunction, HoleWaveFunction, ElectronEnergy, HoleEnergy,
 			MatrixElement, DeltaEnergy, Chemicalpotential, FermiDirac, Linewidth, AbsorptionCoefficient
 		},

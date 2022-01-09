@@ -14,7 +14,7 @@ $FailureQuantumNumber 		:= Failure["Possible values: [" <> ToString[#1] <> ", " 
 *)
 
 ClearAll[$$ToolDir, $$EigensystemDir];
-$$ToolDir	= FileNameJoin[{FileNameDrop[$InputFileName, -4]}];
+$$ToolDir = FileNameJoin[{FileNameDrop[$InputFileName, -4]}];
 
 (*
 	Adapters

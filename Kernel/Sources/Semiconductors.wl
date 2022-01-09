@@ -8,10 +8,10 @@ Begin["`Private`"];
 Needs["Tool`Constants`"];
 
 ClearAll[$$ElectronMassSI, $$PlanckConstantSI, $$PlanckConstantCGS, $$ElectronChargeCGS];
-$$ElectronMassSI			= Tool`Constants`Private`$$ElectronMassSI;
-$$PlanckConstantSI			= Tool`Constants`Private`$$PlanckConstantSI;
-$$PlanckConstantCGS			= Tool`Constants`Private`$$PlanckConstantCGS;
-$$ElectronChargeCGS			= Tool`Constants`Private`$$ElectronChargeCGS;
+$$ElectronMassSI		= Tool`Constants`Private`$$ElectronMassSI;
+$$PlanckConstantSI		= Tool`Constants`Private`$$PlanckConstantSI;
+$$PlanckConstantCGS		= Tool`Constants`Private`$$PlanckConstantCGS;
+$$ElectronChargeCGS		= Tool`Constants`Private`$$ElectronChargeCGS;
 
 (*
 	Get helpers
@@ -23,7 +23,7 @@ ClearAll[$$FailureFunctionSignature];
 $FailureFunctionSignature	= Tool`Helpers`Private`$FailureFunctionSignature;
 
 ClearAll[$JouleToEV];
-$JouleToEV					= Tool`Helpers`Private`$JouleToEV;
+$JouleToEV	= Tool`Helpers`Private`$JouleToEV;
 
 (*
 	Semiconductor parameters
