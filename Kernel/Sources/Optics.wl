@@ -25,7 +25,7 @@ $$FailureFunctionSignature = Tool`Helpers`Private`$FailureFunctionSignature;
 $$FailureQuantumNumber     = Tool`Helpers`Private`$FailureQuantumNumber; 
 
 ClearAll[$JouleToEV, GaussDistribution];
-$JouleToEV                  = Tool`Helpers`Private`$JouleToEV;
+$JouleToEV                 = Tool`Helpers`Private`$JouleToEV;
 GaussDistribution          = Tool`Helpers`Private`$GaussDistribution;
 
 (*
@@ -51,7 +51,7 @@ ClearAll[StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D];
 StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D = Tool`Eigensystems`Private`StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D;
 
 (*
-	Interband Transitions
+	Interband absorption coefficient
 *)
 
 ClearAll[InterbandAbsorptionCoefficient];
@@ -64,7 +64,7 @@ InterbandAbsorptionCoefficient[InitialState_, FinalState_, Hole_, temperature_] 
 			BohrRadius 			= QuantityMagnitude @ $BohrRadius[InitialState["Semiconductor"], #] &
 			,
 			ElectronModel, HoleModel, ElectronWaveFunction, HoleWaveFunction, ElectronEnergy, HoleEnergy,
-			MatrixElement, DeltaEnergy, Chemicalpotential, FermiDirac, Linewidth, AbsorptionCoefficient
+			MatrixElement, DeltaEnergy, Chemicalpotential, FermiDirac, Linewidth
 		},
 
 		HoleModel = InitialState[Hole];
@@ -101,7 +101,7 @@ InterbandAbsorptionCoefficient[InitialState_, FinalState_, Hole_, temperature_] 
 				LightEnergy = Global`LightEnergy
 			},
 
-			AbsorptionCoefficient = Times[
+			Times[
 				FermiDirac[ElectronEnergy] * (1 - FermiDirac[HoleEnergy]),
 				LightEnergy * Linewidth / ((LightEnergy - DeltaEnergy)^2 + Linewidth^2),
 				MatrixElement^2
@@ -109,6 +109,10 @@ InterbandAbsorptionCoefficient[InitialState_, FinalState_, Hole_, temperature_] 
 		]
 	];
 InterbandAbsorptionCoefficient[___] := $$FailureFunctionSignature["Dependencies`Private`InterbandAbsorptionCoefficient"];
+
+(*
+	Interband absorption edge
+*)
 
 ClearAll[InterbandAbsorptionEdge];
 InterbandAbsorptionEdge[InitialState_, FinalState_, Hole_, temperature_] :=
@@ -129,6 +133,10 @@ InterbandAbsorptionEdge[InitialState_, FinalState_, Hole_, temperature_] :=
 	];
 InterbandAbsorptionEdge[___] := $$FailureFunctionSignature["Dependencies`Private`InterbandAbsorptionEdge"];
 
+(*
+	PL coefficient
+*)
+
 ClearAll[PhotoluminescenceCoefficient];
 PhotoluminescenceCoefficient[InitialState_, FinalState_, Hole_, temperature_] :=
 	Catch @ Block[
@@ -143,20 +151,26 @@ PhotoluminescenceCoefficient[InitialState_, FinalState_, Hole_, temperature_] :=
 				InterbandAbsorptionCoefficient[InitialState, FinalState, Hole, temperature]
 			];
 
-		Times[
-			LightEnergy * absorption,
-			Exp[-(LightEnergy - 10^3 * Gap)/(10^3 * $JouleToEV[BoltzmannConstantSI * temperature])],
-			Exp[(0.5 - Gap)/($JouleToEV[BoltzmannConstantSI * temperature])]
+		With[
+			{
+				LightEnergy = Global`LightEnergy
+			},
+
+			Times[
+				LightEnergy * absorption,
+				Exp[-(LightEnergy - 10^3 * Gap)/(10^3 * $JouleToEV[BoltzmannConstantSI * temperature])],
+				Exp[(0.5 - Gap)/($JouleToEV[BoltzmannConstantSI * temperature])]
+			]
 		]
 	];
 PhotoluminescenceCoefficient[___] := $$FailureFunctionSignature["Dependencies`Private`PhotoluminescenceCoefficient"];
 
 (*
-	Intraband Transitions
+	Intraband absorption coefficient
 *)
 
 ClearAll[IntrabandAbsorptionCoefficient];
-IntrabandAbsorptionCoefficient[Model_, ElectricField_, MagneticField_, InitialState_, FinalState_, temperature_] :=
+IntrabandAbsorptionCoefficient[InitialState_, FinalState_, Particle_, temperature_] :=
 	Catch @ Block[
 		{
 			BoltzmannConstantSI 	= QuantityMagnitude @ $$BoltzmannConstantSI,
@@ -164,318 +178,311 @@ IntrabandAbsorptionCoefficient[Model_, ElectricField_, MagneticField_, InitialSt
 			VacuumPremittivitySI 	= QuantityMagnitude @ $$VacuumPremittivitySI,
 			ElectronChargeSI 		= QuantityMagnitude @ $$ElectronChargeSI,
 			SpeedOfLightSI 			= QuantityMagnitude @ $$SpeedOfLightSI,
-			Radius 					= QuantityMagnitude @ BohrRadius[Model["Parameters", "Semiconductor"], #] &,
-			Mass 					= QuantityMagnitude @ EffectiveMass[Model["Parameters", "Semiconductor"], #] &,
-			Gap 					= QuantityMagnitude @ $GapEnergy[Model["Parameters", "Semiconductor"]]
+			Radius 					= QuantityMagnitude @ $BohrRadius[InitialState["Semiconductor"], #] &,
+			Mass 					= QuantityMagnitude @ $EffectiveMass[InitialState["Semiconductor"], #] &,
+			Gap 					= QuantityMagnitude @ $GapEnergy[InitialState["Semiconductor"], temperature]
 			,
-			Intensity = 10^8, ElectronsPopulation = 3 * 10^22, InfraredRefractiveIndex = 3.51
+			Intensity = 10^8, ElectronsPopulation = 3*10^22, InfraredRefractiveIndex = 3.51
 			,
-			Electron1Model, Electron2Model, Electron1WaveFunction, Electron2WaveFunction, Electron1Energy, Electron2Energy,
+			Particle1Model, Particle2Model, Particle1WaveFunction, Particle2WaveFunction, Particle1Energy, Particle2Energy,
 			MatrixElement12, MatrixElement11, MatrixElement22, DeltaEnergy, Chemicalpotential, FermiDirac, Linewidth,
 			LinearConstant, NonLinearConstant, LinearAbsorptionCoefficient, NonLinearAbsorptionCoefficient
 		},
 
-		Electron1Model = Model[{ElectricField, MagneticField}][{MagneticFieldElectron1, RadialNumberElectron1, AxialNumberElectron1}]["Electron"];
-		Electron1WaveFunction = Last@Electron1Model["Axial"] * Last@Electron1Model["Radial"] /. Eigensystems`Private`r -> 1;
-		Electron1Energy = First@Electron1Model["Axial"] + First@Electron1Model["Radial"];
+		Particle1Model = InitialState[Particle];
+		Particle1WaveFunction = ReplaceAll[
+			Particle1Model["Axial", "WaveFunction"] * Particle1Model["Radial", "WaveFunction"],
+			Global`r -> Max[InitialState["Geometry", "Radial"]] * Radius[Particle]
+		];
+		Particle1Energy = Particle1Model["Axial", "Energy"] + Particle1Model["Radial", "Energy"];
 
-		Electron2Model = Model[{ElectricField, MagneticField}][{MagneticFieldElectron2, RadialNumberElectron2, AxialNumberElectron2}]["Electron"];
-		Electron2WaveFunction = Last@Electron2Model["Axial"] * Last@Electron2Model["Radial"] /. Eigensystems`Private`r -> 1;
-		Electron2Energy = First@Electron2Model["Axial"] + First@Electron2Model["Radial"];
-		
+		Particle2Model = FinalState[Particle];
+		Particle2WaveFunction = ReplaceAll[
+			Particle2Model["Axial", "WaveFunction"] * Particle2Model["Radial", "WaveFunction"],
+			Global`r -> Max[FinalState["Geometry", "Radial"]] * Radius[Particle]
+		];
+		Particle2Energy = Particle2Model["Axial", "Energy"] + Particle2Model["Radial", "Energy"];
+
 		MatrixElement12 = Abs @ Integrate[
-			Electron1WaveFunction * Eigensystems`Private`z * Electron2WaveFunction,
-			{
-				Eigensystems`Private`z,
-				- Min @ Model["Parameters", "Sizes", "Axial"],
-				  Max @ Model["Parameters", "Sizes", "Axial"]
-			}
+			2*Pi * Particle1WaveFunction * Global`z * Particle2WaveFunction
 			,
-			{
-				Eigensystems`Private`angle,
-				0,
-				2 * Pi
-			}
+			Prepend[
+				InitialState["Geometry", "Axial"],
+				Global`z
+			]
 		];
 		MatrixElement11 = Abs @ Integrate[
-			Electron1WaveFunction * Eigensystems`Private`z * Electron1WaveFunction,
-			{
-				Eigensystems`Private`z,
-				- Min @ Model["Parameters", "Sizes", "Axial"],
-				  Max @ Model["Parameters", "Sizes", "Axial"]
-			}
+			2*Pi * Particle1WaveFunction * Global`z * Particle1WaveFunction
 			,
-			{
-				Eigensystems`Private`angle,
-				0,
-				2 * Pi
-			}
+			Prepend[
+				InitialState["Geometry", "Axial"],
+				Global`z
+			]
 		];
 		MatrixElement22 = Abs @ Integrate[
-			Electron2WaveFunction * Eigensystems`Private`z * Electron2WaveFunction,
-			{
-				Eigensystems`Private`z,
-				- Min @ Model["Parameters", "Sizes", "Axial"],
-				  Max @ Model["Parameters", "Sizes", "Axial"]
-			}
+			2*Pi * Particle2WaveFunction * Global`z * Particle2WaveFunction
 			,
-			{
-				Eigensystems`Private`angle,
-				0,
-				2 * Pi
-			}
+			Prepend[
+				InitialState["Geometry", "Axial"],
+				Global`z
+			]
 		];
 
-		DeltaEnergy = Abs[Electron2Energy - Electron1Energy]  * 10^3;
+		DeltaEnergy = Abs[Particle2Energy - Particle1Energy]  * 10^3;
 		
 		Chemicalpotential = - (Gap/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[Mass["Heavy Hole"] / Mass["Electron"]];
 		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
 		Linewidth = 0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2 ;
 		
 		LinearConstant = Divide[
-			Radius["Electron"]^2 * ElectronChargeSI^2 * ElectronsPopulation,
-			PlanckConstantSI * VacuumPremittivitySI * DielectricConstant[Model["Parameters", "Semiconductor"]] * SpeedOfLightSI
+			Radius[Particle]^2 * ElectronChargeSI^2 * ElectronsPopulation,
+			PlanckConstantSI * VacuumPremittivitySI * $DielectricConstant[InitialState["Semiconductor"]] * SpeedOfLightSI
 		];
 
-		LinearAbsorptionCoefficient = Times[
-			LinearConstant * FermiDirac[Electron1Energy] * (1 - FermiDirac[Electron2Energy]),
-			LightEnergy * Linewidth *  MatrixElement12^2 / ((DeltaEnergy - LightEnergy)^2 + Linewidth^2)
-		];
+		With[
+			{
+				LightEnergy = Global`LightEnergy
+			},
 
-		NonLinearConstant = 10^6 * Nest[
-			$JouleToEV,
-			Divide[
-				- Radius["Electron"]^4 * ElectronChargeSI^4 * 2*ElectronsPopulation * Intensity,
-				PlanckConstantSI * VacuumPremittivitySI^2 * DielectricConstant[Model["Parameters", "Semiconductor"]] * SpeedOfLightSI^2 * InfraredRefractiveIndex
-			],
-			2
-		];
+			LinearAbsorptionCoefficient = Times[
+				LinearConstant * FermiDirac[Particle1Energy] * (1 - FermiDirac[Particle2Energy]),
+				LightEnergy * Linewidth *  MatrixElement12^2 / ((DeltaEnergy - LightEnergy)^2 + Linewidth^2)
+			];
 
-		NonLinearAbsorptionCoefficient = Times[
-			NonLinearConstant * FermiDirac[Electron1Energy] * (1 - FermiDirac[Electron2Energy]),
-			LightEnergy * Linewidth * MatrixElement12^4 / ((DeltaEnergy - LightEnergy)^2 + Linewidth^2)^2,
-			1 - ((MatrixElement22 - MatrixElement11)^2/(4 Abs[MatrixElement12]^2))*((3 DeltaEnergy^2 - 4*LightEnergy*DeltaEnergy + LightEnergy^2 - Linewidth^2)/(DeltaEnergy^2 + Linewidth^2))
-		];
+			NonLinearConstant = 10^6 * Nest[
+				$JouleToEV,
+				Divide[
+					- Radius[Particle]^4 * ElectronChargeSI^4 * 2*ElectronsPopulation * Intensity,
+					PlanckConstantSI * VacuumPremittivitySI^2 * $DielectricConstant[InitialState["Semiconductor"]] * SpeedOfLightSI^2 * InfraredRefractiveIndex
+				],
+				2
+			];
 
-		TotalAbsorptionCoefficient = Simplify[LinearAbsorptionCoefficient + NonLinearAbsorptionCoefficient];
+			NonLinearAbsorptionCoefficient = Times[
+				NonLinearConstant * FermiDirac[Particle1Energy] * (1 - FermiDirac[Particle2Energy]),
+				LightEnergy * Linewidth * MatrixElement12^4 / ((DeltaEnergy - LightEnergy)^2 + Linewidth^2)^2,
+				1 - ((MatrixElement22 - MatrixElement11)^2/(4 Abs[MatrixElement12]^2))*((3 DeltaEnergy^2 - 4*LightEnergy*DeltaEnergy + LightEnergy^2 - Linewidth^2)/(DeltaEnergy^2 + Linewidth^2))
+			];
 
-		{LinearAbsorptionCoefficient, NonLinearAbsorptionCoefficient, TotalAbsorptionCoefficient}
+			TotalAbsorptionCoefficient = Simplify[LinearAbsorptionCoefficient + NonLinearAbsorptionCoefficient];
+
+			{LinearAbsorptionCoefficient, NonLinearAbsorptionCoefficient, TotalAbsorptionCoefficient}
+		]
 	];
 IntrabandAbsorptionCoefficient[___] := $$FailureFunctionSignature["Dependencies`Private`IntrabandAbsorptionCoefficient"];
 
+(*
+	Second Harmonic Generation
+*)
+
 ClearAll[SecondHarmonicGeneration];
-SecondHarmonicGeneration[Model_, ElectricField_, MagneticField_, NumbersElectron1_, NumbersElectron2_, NumbersElectron3_, temperature_] :=
+SecondHarmonicGeneration[State1_, State2_, State3_, Particle_, temperature_] :=
 	Catch @ Block[
 		{
-			BoltzmannConstantSI = QuantityMagnitude @ $$BoltzmannConstantSI,
-			VacuumPremittivitySI = QuantityMagnitude @ $$VacuumPremittivitySI, ElectronChargeSI = QuantityMagnitude @ $$ElectronChargeSI,
-			ElectronsPopulation = 3 * 10^22,
-			Radius = QuantityMagnitude @ BohrRadius[Model["Parameters", "Semiconductor"], #] &,
-			Mass = QuantityMagnitude @ EffectiveMass[Model["Parameters", "Semiconductor"], #] &,
-			Gap = QuantityMagnitude @ $GapEnergy[Model["Parameters", "Semiconductor"]],
-			Electron1Model, Electron1WaveFunction, Electron1Energy,
-			Electron2Model, Electron2WaveFunction, Electron2Energy,
-			Electron3Model, Electron3WaveFunction, Electron3Energy,
-			MatrixElement12, MatrixElement13, MatrixElement23, DeltaEnergy12, DeltaEnergy13,
-			Chemicalpotential, FermiDirac, Linewidth, shg
+			BoltzmannConstantSI 	= QuantityMagnitude @ $$BoltzmannConstantSI,
+			VacuumPremittivitySI 	= QuantityMagnitude @ $$VacuumPremittivitySI,
+			ElectronChargeSI 		= QuantityMagnitude @ $$ElectronChargeSI,
+			Radius 					= QuantityMagnitude @ $BohrRadius[State1["Semiconductor"], #] &,
+			Mass 					= QuantityMagnitude @ $EffectiveMass[State1["Semiconductor"], #] &,
+			Gap 					= QuantityMagnitude @ $GapEnergy[State1["Semiconductor"], temperature]
+			,
+			ElectronsPopulation = 3 * 10^22
+			,
+			Particle1Model, Particle1WaveFunction, Particle1Energy,
+			Particle2Model, Particle2WaveFunction, Particle2Energy,
+			Particle3Model, Particle3WaveFunction, Particle3Energy,
+			MatrixElement12, MatrixElement13, MatrixElement23,
+			DeltaEnergy12, DeltaEnergy13, Chemicalpotential, FermiDirac, Linewidth
 		},
 
-		{MagneticFieldElectron1, RadialNumberElectron1, AxialNumberElectron1} = NumbersElectron1;
-		{MagneticFieldElectron2, RadialNumberElectron2, AxialNumberElectron2} = NumbersElectron2;
-		{MagneticFieldElectron3, RadialNumberElectron3, AxialNumberElectron3} = NumbersElectron3;
+		Particle1Model = State1[Particle];
+		Particle1WaveFunction = ReplaceAll[
+			Particle1Model["Axial", "WaveFunction"] * Particle1Model["Radial", "WaveFunction"],
+			Global`r -> Max[State1["Geometry", "Radial"]] * Radius[Particle]
+		];
+		Particle1Energy = Particle1Model["Axial", "Energy"] + Particle1Model["Radial", "Energy"];
 
+		Particle2Model = State2[Particle];
+		Particle2WaveFunction = ReplaceAll[
+			Particle2Model["Axial", "WaveFunction"] * Particle2Model["Radial", "WaveFunction"],
+			Global`r -> Max[State2["Geometry", "Radial"]] * Radius[Particle]
+		];
+		Particle2Energy = Particle2Model["Axial", "Energy"] + Particle2Model["Radial", "Energy"];
 
-		Electron1Model = Model[{ElectricField, MagneticField}][{MagneticFieldElectron1, RadialNumberElectron1, AxialNumberElectron1}]["Electron"];
-		Electron1WaveFunction = Last@Electron1Model["Axial"] * Last@Electron1Model["Radial"] /. Eigensystems`Private`r -> 1;
-		Electron1Energy = First@Electron1Model["Axial"] + First@Electron1Model["Radial"];
-
-		Electron2Model = Model[{ElectricField, MagneticField}][{MagneticFieldElectron2, RadialNumberElectron2, AxialNumberElectron2}]["Electron"];
-		Electron2WaveFunction = Last@Electron2Model["Axial"] * Last@Electron2Model["Radial"] /. Eigensystems`Private`r -> 1;
-		Electron2Energy = First@Electron2Model["Axial"] + First@Electron2Model["Radial"];
-
-		Electron3Model = Model[{ElectricField, MagneticField}][{MagneticFieldElectron3, RadialNumberElectron3, AxialNumberElectron3}]["Electron"];
-		Electron3WaveFunction = Last@Electron3Model["Axial"] * Last@Electron3Model["Radial"] /. Eigensystems`Private`r -> 1;
-		Electron3Energy = First@Electron3Model["Axial"] + First@Electron3Model["Radial"];
+		Particle3Model = State3[Particle];
+		Particle3WaveFunction = ReplaceAll[
+			Particle3Model["Axial", "WaveFunction"] * Particle3Model["Radial", "WaveFunction"],
+			Global`r -> Max[State3["Geometry", "Radial"]] * Radius[Particle]
+		];
+		Particle3Energy = Particle3Model["Axial", "Energy"] + Particle3Model["Radial", "Energy"];
 		
 		MatrixElement12 = Abs @ Integrate[
-			Electron1WaveFunction * Eigensystems`Private`z * Electron2WaveFunction,
-			{
-				Eigensystems`Private`z,
-				- Min @ Model["Parameters", "Sizes", "Axial"],
-				  Max @ Model["Parameters", "Sizes", "Axial"]
-			}
+			2*Pi * Particle1WaveFunction * Global`z * Particle2WaveFunction
 			,
-			{
-				Eigensystems`Private`angle,
-				0,
-				2 * Pi
-			}
-		];
-		MatrixElement13 = Abs @ Integrate[
-			Electron1WaveFunction * Eigensystems`Private`z * Electron3WaveFunction,
-			{
-				Eigensystems`Private`z,
-				- Min @ Model["Parameters", "Sizes", "Axial"],
-				  Max @ Model["Parameters", "Sizes", "Axial"]
-			}
-			,
-			{
-				Eigensystems`Private`angle,
-				0,
-				2 * Pi
-			}
-		];
-		MatrixElement23 = Abs @ Integrate[
-			Electron2WaveFunction * Eigensystems`Private`z * Electron3WaveFunction,
-			{
-				Eigensystems`Private`z,
-				- Min @ Model["Parameters", "Sizes", "Axial"],
-				  Max @ Model["Parameters", "Sizes", "Axial"]
-			}
-			,
-			{
-				Eigensystems`Private`angle,
-				0,
-				2 * Pi
-			}
+			Prepend[
+				State1["Geometry", "Axial"],
+				Global`z
+			]
 		];
 
-		DeltaEnergy12 = Abs[Electron2Energy - Electron1Energy]  * 10^3;
-		DeltaEnergy13 = Abs[Electron3Energy - Electron1Energy]  * 10^3;
+		MatrixElement13 = Abs @ Integrate[
+			2*Pi * Particle1WaveFunction * Global`z * Particle3WaveFunction
+			,
+			Prepend[
+				State1["Geometry", "Axial"],
+				Global`z
+			]
+		];
+
+		MatrixElement23 = Abs @ Integrate[
+			2*Pi * Particle2WaveFunction * Global`z * Particle3WaveFunction
+			,
+			Prepend[
+				State1["Geometry", "Axial"],
+				Global`z
+			]
+		];
+
+		DeltaEnergy12 = Abs[Particle2Energy - Particle1Energy]  * 10^3;
+		DeltaEnergy13 = Abs[Particle3Energy - Particle1Energy]  * 10^3;
 		
 		Chemicalpotential = - (Gap/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[Mass["Heavy Hole"] / Mass["Electron"]];
 		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
 		Linewidth = 0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2 ;
 		
-		LinearConstant = 10^6 * Nest[$JouleToEV, Radius["Electron"]^3 * ElectronChargeSI^3 * ElectronsPopulation / VacuumPremittivitySI, 2];
+		LinearConstant = 10^6 * Nest[$JouleToEV, Radius[Particle]^3 * ElectronChargeSI^3 * ElectronsPopulation / VacuumPremittivitySI, 2];
 
-		shg = Times[
-			LinearConstant * FermiDirac[Electron1Energy] * (1 - FermiDirac[Electron2Energy]) * (1 - FermiDirac[Electron3Energy]),
-			Abs[MatrixElement12 * MatrixElement13 *  MatrixElement23 / ((LightEnergy - DeltaEnergy12 - I*Linewidth) * (2*LightEnergy - DeltaEnergy13 - I*Linewidth))]
+		With[
+			{
+				LightEnergy = Global`LightEnergy
+			},
+
+			Times[
+				LinearConstant * FermiDirac[Particle1Energy] * (1 - FermiDirac[Particle2Energy]) * (1 - FermiDirac[Particle3Energy]),
+				Abs[MatrixElement12 * MatrixElement13 *  MatrixElement23 / ((LightEnergy - DeltaEnergy12 - I*Linewidth) * (2*LightEnergy - DeltaEnergy13 - I*Linewidth))]
+			]
 		]
 	];
 SecondHarmonicGeneration[___] := $$FailureFunctionSignature["Dependencies`Private`SecondHarmonicGeneration"];
 
+(*
+	Third Harmonic Generation
+*)
+
 ClearAll[ThirdHarmonicGeneration];
-ThirdHarmonicGeneration[Model_, ElectricField_, MagneticField_, NumbersElectron1_, NumbersElectron2_, NumbersElectron3_, NumbersElectron4_, temperature_] :=
+ThirdHarmonicGeneration[State1_, State2_, State3_, State4_, Particle_, temperature_] :=
 	Catch @ Block[
 		{
-			BoltzmannConstantSI = QuantityMagnitude @ $$BoltzmannConstantSI,
-			VacuumPremittivitySI = QuantityMagnitude @ $$VacuumPremittivitySI, ElectronChargeSI = QuantityMagnitude @ $$ElectronChargeSI,
-			ElectronsPopulation = 3 * 10^22,
-			Radius = QuantityMagnitude @ BohrRadius[Model["Parameters", "Semiconductor"], #] &,
-			Mass = QuantityMagnitude @ EffectiveMass[Model["Parameters", "Semiconductor"], #] &,
-			Gap = QuantityMagnitude @ $GapEnergy[Model["Parameters", "Semiconductor"]],
-			Electron1Model, Electron1WaveFunction, Electron1Energy,
-			Electron2Model, Electron2WaveFunction, Electron2Energy,
-			Electron3Model, Electron3WaveFunction, Electron3Energy,
-			Electron4Model, Electron4WaveFunction, Electron4Energy,
-			MatrixElement12, MatrixElement33, MatrixElement34, MatrixElement14, DeltaEnergy12, DeltaEnergy13, DeltaEnergy14,
-			Chemicalpotential, FermiDirac, Linewidth, thg
+			BoltzmannConstantSI 	= QuantityMagnitude @ $$BoltzmannConstantSI,
+			VacuumPremittivitySI 	= QuantityMagnitude @ $$VacuumPremittivitySI,
+			ElectronChargeSI 		= QuantityMagnitude @ $$ElectronChargeSI,
+			Radius 					= QuantityMagnitude @ $BohrRadius[State1["Semiconductor"], #] &,
+			Mass 					= QuantityMagnitude @ $EffectiveMass[State1["Semiconductor"], #] &,
+			Gap 					= QuantityMagnitude @ $GapEnergy[State1["Semiconductor"], temperature]
+			,
+			ElectronsPopulation = 3 * 10^22
+			,
+			Particle1Model, Particle1WaveFunction, Particle1Energy,
+			Particle2Model, Particle2WaveFunction, Particle2Energy,
+			Particle3Model, Particle3WaveFunction, Particle3Energy,
+			Particle4Model, Particle4WaveFunction, Particle4Energy,
+			MatrixElement12, MatrixElement33, MatrixElement34, MatrixElement14,
+			DeltaEnergy12, DeltaEnergy13, DeltaEnergy14, Chemicalpotential, FermiDirac, Linewidth
 		},
 
-		{MagneticFieldElectron1, RadialNumberElectron1, AxialNumberElectron1} = NumbersElectron1;
-		{MagneticFieldElectron2, RadialNumberElectron2, AxialNumberElectron2} = NumbersElectron2;
-		{MagneticFieldElectron3, RadialNumberElectron3, AxialNumberElectron3} = NumbersElectron3;
-		{MagneticFieldElectron4, RadialNumberElectron4, AxialNumberElectron4} = NumbersElectron4;
+		Particle1Model = State1[Particle];
+		Particle1WaveFunction = ReplaceAll[
+			Particle1Model["Axial", "WaveFunction"] * Particle1Model["Radial", "WaveFunction"],
+			Global`r -> Max[State1["Geometry", "Radial"]] * Radius[Particle]
+		];
+		Particle1Energy = Particle1Model["Axial", "Energy"] + Particle1Model["Radial", "Energy"];
 
+		Particle2Model = State2[Particle];
+		Particle2WaveFunction = ReplaceAll[
+			Particle2Model["Axial", "WaveFunction"] * Particle2Model["Radial", "WaveFunction"],
+			Global`r -> Max[State2["Geometry", "Radial"]] * Radius[Particle]
+		];
+		Particle2Energy = Particle2Model["Axial", "Energy"] + Particle2Model["Radial", "Energy"];
 
-		Electron1Model = Model[{ElectricField, MagneticField}][{MagneticFieldElectron1, RadialNumberElectron1, AxialNumberElectron1}]["Electron"];
-		Electron1WaveFunction = Last@Electron1Model["Axial"] * Last@Electron1Model["Radial"] /. Eigensystems`Private`r -> 1;
-		Electron1Energy = First@Electron1Model["Axial"] + First@Electron1Model["Radial"];
+		Particle3Model = State3[Particle];
+		Particle3WaveFunction = ReplaceAll[
+			Particle3Model["Axial", "WaveFunction"] * Particle3Model["Radial", "WaveFunction"],
+			Global`r -> Max[State3["Geometry", "Radial"]] * Radius[Particle]
+		];
+		Particle3Energy = Particle3Model["Axial", "Energy"] + Particle3Model["Radial", "Energy"];
 
-		Electron2Model = Model[{ElectricField, MagneticField}][{MagneticFieldElectron2, RadialNumberElectron2, AxialNumberElectron2}]["Electron"];
-		Electron2WaveFunction = Last@Electron2Model["Axial"] * Last@Electron2Model["Radial"] /. Eigensystems`Private`r -> 1;
-		Electron2Energy = First@Electron2Model["Axial"] + First@Electron2Model["Radial"];
+		Particle4Model = State4[Particle];
+		Particle4WaveFunction = ReplaceAll[
+			Particle4Model["Axial", "WaveFunction"] * Particle4Model["Radial", "WaveFunction"],
+			Global`r -> Max[State4["Geometry", "Radial"]] * Radius[Particle]
+		];
+		Particle4Energy = Particle4Model["Axial", "Energy"] + Particle4Model["Radial", "Energy"];
 
-		Electron3Model = Model[{ElectricField, MagneticField}][{MagneticFieldElectron3, RadialNumberElectron3, AxialNumberElectron3}]["Electron"];
-		Electron3WaveFunction = Last@Electron3Model["Axial"] * Last@Electron3Model["Radial"] /. Eigensystems`Private`r -> 1;
-		Electron3Energy = First@Electron3Model["Axial"] + First@Electron3Model["Radial"];
-
-		Electron4Model = Model[{ElectricField, MagneticField}][{MagneticFieldElectron4, RadialNumberElectron4, AxialNumberElectron4}]["Electron"];
-		Electron4WaveFunction = Last@Electron4Model["Axial"] * Last@Electron4Model["Radial"] /. Eigensystems`Private`r -> 1;
-		Electron4Energy = First@Electron4Model["Axial"] + First@Electron4Model["Radial"];
-		
 		MatrixElement12 = Abs @ Integrate[
-			Electron1WaveFunction * Eigensystems`Private`z * Electron2WaveFunction,
-			{
-				Eigensystems`Private`z,
-				- Min @ Model["Parameters", "Sizes", "Axial"],
-				  Max @ Model["Parameters", "Sizes", "Axial"]
-			}
+			2*Pi * Particle1WaveFunction * Global`z * Particle2WaveFunction
 			,
-			{
-				Eigensystems`Private`angle,
-				0,
-				2 * Pi
-			}
-		];
-		MatrixElement23 = Abs @ Integrate[
-			Electron2WaveFunction * Eigensystems`Private`z * Electron3WaveFunction,
-			{
-				Eigensystems`Private`z,
-				- Min @ Model["Parameters", "Sizes", "Axial"],
-				  Max @ Model["Parameters", "Sizes", "Axial"]
-			}
-			,
-			{
-				Eigensystems`Private`angle,
-				0,
-				2 * Pi
-			}
-		];
-		MatrixElement34 = Abs @ Integrate[
-			Electron3WaveFunction * Eigensystems`Private`z * Electron4WaveFunction,
-			{
-				Eigensystems`Private`z,
-				- Min @ Model["Parameters", "Sizes", "Axial"],
-				  Max @ Model["Parameters", "Sizes", "Axial"]
-			}
-			,
-			{
-				Eigensystems`Private`angle,
-				0,
-				2 * Pi
-			}
-		];
-		MatrixElement14 = Abs @ Integrate[
-			Electron1WaveFunction * Eigensystems`Private`z * Electron4WaveFunction,
-			{
-				Eigensystems`Private`z,
-				- Min @ Model["Parameters", "Sizes", "Axial"],
-				  Max @ Model["Parameters", "Sizes", "Axial"]
-			}
-			,
-			{
-				Eigensystems`Private`angle,
-				0,
-				2 * Pi
-			}
+			Prepend[
+				State1["Geometry", "Axial"],
+				Global`z
+			]
 		];
 
-		DeltaEnergy12 = Abs[Electron2Energy - Electron1Energy]  * 10^3;
-		DeltaEnergy13 = Abs[Electron3Energy - Electron1Energy]  * 10^3;
-		DeltaEnergy14 = Abs[Electron4Energy - Electron1Energy]  * 10^3;
+		MatrixElement23 = Abs @ Integrate[
+			2*Pi * Particle2WaveFunction * Global`z * Particle3WaveFunction
+			,
+			Prepend[
+				State1["Geometry", "Axial"],
+				Global`z
+			]
+		];
+
+		MatrixElement34 = Abs @ Integrate[
+			2*Pi * Particle3WaveFunction * Global`z * Particle4WaveFunction
+			,
+			Prepend[
+				State1["Geometry", "Axial"],
+				Global`z
+			]
+		];
+
+		MatrixElement14 = Abs @ Integrate[
+			2*Pi * Particle1WaveFunction * Global`z * Particle4WaveFunction
+			,
+			Prepend[
+				State1["Geometry", "Axial"],
+				Global`z
+			]
+		];
+
+		DeltaEnergy12 = Abs[Particle2Energy - Particle1Energy]  * 10^3;
+		DeltaEnergy13 = Abs[Particle3Energy - Particle1Energy]  * 10^3;
+		DeltaEnergy14 = Abs[Particle4Energy - Particle1Energy]  * 10^3;
 
 				
 		Chemicalpotential = - (Gap/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[Mass["Heavy Hole"] / Mass["Electron"]];
 		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
 		Linewidth = 0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2 ;
 		
-		LinearConstant = 10^9 * Nest[$JouleToEV, Radius["Electron"]^4 * ElectronChargeSI^4 * ElectronsPopulation / VacuumPremittivitySI, 3];
+		LinearConstant = 10^9 * Nest[$JouleToEV, Radius[Particle]^4 * ElectronChargeSI^4 * ElectronsPopulation / VacuumPremittivitySI, 3];
 		
-		thg = Times[
-			LinearConstant * FermiDirac[Electron1Energy] * (1 - FermiDirac[Electron2Energy]) * (1 - FermiDirac[Electron3Energy]) * (1 - FermiDirac[Electron4Energy]),
-			Abs @ Divide[
-				MatrixElement12 * MatrixElement23 *  MatrixElement34 * MatrixElement14,
-				(LightEnergy - DeltaEnergy12 - I*Linewidth) * (2*LightEnergy - DeltaEnergy13 - I*Linewidth) * (3*LightEnergy - DeltaEnergy14 - I*Linewidth)
+		With[
+			{
+				LightEnergy = Global`LightEnergy
+			},
+
+			Times[
+				LinearConstant * FermiDirac[Particle1Energy] * (1 - FermiDirac[Particle2Energy]) * (1 - FermiDirac[Particle3Energy]) * (1 - FermiDirac[Particle4Energy]),
+				Abs @ Divide[
+					MatrixElement12 * MatrixElement23 *  MatrixElement34 * MatrixElement14,
+					(LightEnergy - DeltaEnergy12 - I*Linewidth) * (2*LightEnergy - DeltaEnergy13 - I*Linewidth) * (3*LightEnergy - DeltaEnergy14 - I*Linewidth)
+				]
 			]
 		]
 	];
 ThirdHarmonicGeneration[___] := $$FailureFunctionSignature["Dependencies`Private`ThirdHarmonicGeneration"];
 
 (*
-	Ensemble Effects
+	Ensemble Effects // Need To Edit
 *)
 
 ClearAll[GetSPCQDRaduisDependency];

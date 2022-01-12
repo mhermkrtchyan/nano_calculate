@@ -421,7 +421,7 @@ BiconvexLensQuantumDotWithMoshinsky2D[Semiconductor_, radii_, heights_, Interact
 BiconvexLensQuantumDot[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`BiconvexLensQuantumDot"];
 
 (*
-	Vertical Coupled Quantum Dot
+	Vertical Coupled Quantum Dot  // Need To Edit
 *)
 
 ClearAll[CylindricalQDsWithDoubleMorse];
