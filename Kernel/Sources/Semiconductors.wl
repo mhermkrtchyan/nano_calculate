@@ -29,7 +29,7 @@ $JouleToEV	= Tool`Helpers`Private`$JouleToEV;
 	Semiconductor parameters
 *)
 
-ClearAll[GapEnergy];
+ClearAll[$GapEnergy];
 $GapEnergy[semiconductor_?StringQ, temperature_?NumberQ] :=
 	Switch[semiconductor,
 		"InAs",
@@ -55,7 +55,18 @@ $GapEnergy[semiconductor_?StringQ, temperature_?NumberQ] :=
 	];
 $GapEnergy[___] := $FailureFunctionSignature["Tool`Semiconductors`Private`$GapEnergy"];
 
-ClearAll[DielectricConstant];
+ClearAll[$Linewidth];
+$Linewidth[semiconductor_?StringQ, temperature_?NumberQ] :=
+	Switch[semiconductor,
+		"InAs",
+		0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2 
+		,
+		"GeSi",
+		1.459 * (1 + 2/(Exp[320/temperature] - 1)) 
+	];
+$Linewidth[___] := $FailureFunctionSignature["Tool`Semiconductors`Private`$Linewidth"];
+
+ClearAll[$DielectricConstant];
 $DielectricConstant[semiconductor_?StringQ] :=
 	Switch[semiconductor,
 		"InAs",
@@ -81,7 +92,7 @@ $DielectricConstant[semiconductor_?StringQ] :=
 	];
 $DielectricConstant[___] := $FailureFunctionSignature["Tool`Semiconductors`Private`$DielectricConstant"];
 
-ClearAll[EffectiveMass];
+ClearAll[$EffectiveMass];
 $EffectiveMass[semiconductor_?StringQ, particle_?StringQ] :=
 	Switch[{semiconductor, particle},
 		{"InAs", "Electron"},
@@ -149,7 +160,7 @@ $EffectiveMass[semiconductor_?StringQ, particle_?StringQ] :=
 	];
 $EffectiveMass[___] := $FailureFunctionSignature["Tool`Semiconductors`Private`$EffectiveMass"];
 
-ClearAll[BohrRadius];
+ClearAll[$BohrRadius];
 $BohrRadius[semiconductor_?StringQ, particle_?StringQ] :=
 	Block[
 		{
@@ -168,7 +179,7 @@ $BohrRadius[semiconductor_?StringQ, particle_?StringQ] :=
 	];
 $BohrRadius[___] := $FailureFunctionSignature["Tool`Semiconductors`Private`$BohrRadius"];
 
-ClearAll[RydbergEnergy];
+ClearAll[$RydbergEnergy];
 $RydbergEnergy[semiconductor_?StringQ, particle_?StringQ] :=
 	Block[
 		{
