@@ -34,12 +34,13 @@ GaussDistribution          = Tool`Helpers`Private`$GaussDistribution;
 
 Needs["Tool`Semiconductors`"];
 
-ClearAll[$EffectiveMass, $BohrRadius, $RydbergEnergy, $DielectricConstant, $GapEnergy];
+ClearAll[$EffectiveMass, $BohrRadius, $RydbergEnergy, $DielectricConstant, $GapEnergy, $Linewidth];
 $EffectiveMass              = Tool`Semiconductors`Private`$EffectiveMass;
 $BohrRadius        		    = Tool`Semiconductors`Private`$BohrRadius;
 $RydbergEnergy              = Tool`Semiconductors`Private`$RydbergEnergy;
 $DielectricConstant         = Tool`Semiconductors`Private`$DielectricConstant;
 $GapEnergy                  = Tool`Semiconductors`Private`$GapEnergy;
+$Linewidth					= Tool`Semiconductors`Private`$Linewidth;
 
 (*
 	Get eigensystems
@@ -62,9 +63,10 @@ InterbandAbsorptionCoefficient[InitialState_, FinalState_, Hole_, temperature_] 
 			EffectiveMass 		= QuantityMagnitude @ $EffectiveMass[InitialState["Semiconductor"], #] &,
 			GapEnergy 			= QuantityMagnitude @ $GapEnergy[InitialState["Semiconductor"], temperature],
 			BohrRadius 			= QuantityMagnitude @ $BohrRadius[InitialState["Semiconductor"], #] &
+			Linewidth			= $Linewidth[InitialState["Semiconductor"], temperature]
 			,
 			ElectronModel, HoleModel, ElectronWaveFunction, HoleWaveFunction, ElectronEnergy, HoleEnergy,
-			MatrixElement, DeltaEnergy, Chemicalpotential, FermiDirac, Linewidth
+			MatrixElement, DeltaEnergy, Chemicalpotential, FermiDirac
 		},
 
 		HoleModel = InitialState[Hole];
@@ -93,8 +95,6 @@ InterbandAbsorptionCoefficient[InitialState_, FinalState_, Hole_, temperature_] 
 		
 		Chemicalpotential = - (GapEnergy/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[EffectiveMass["Heavy Hole"] / EffectiveMass["Electron"]];
 		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
-		
-		Linewidth = 0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2 ;
 		
 		With[
 			{
@@ -180,12 +180,13 @@ IntrabandAbsorptionCoefficient[InitialState_, FinalState_, Particle_, temperatur
 			SpeedOfLightSI 			= QuantityMagnitude @ $$SpeedOfLightSI,
 			Radius 					= QuantityMagnitude @ $BohrRadius[InitialState["Semiconductor"], #] &,
 			Mass 					= QuantityMagnitude @ $EffectiveMass[InitialState["Semiconductor"], #] &,
-			Gap 					= QuantityMagnitude @ $GapEnergy[InitialState["Semiconductor"], temperature]
+			Gap 					= QuantityMagnitude @ $GapEnergy[InitialState["Semiconductor"], temperature],
+			Linewidth				= $Linewidth[InitialState["Semiconductor"], temperature]
 			,
 			Intensity = 10^8, ElectronsPopulation = 3*10^22, InfraredRefractiveIndex = 3.51
 			,
 			Particle1Model, Particle2Model, Particle1WaveFunction, Particle2WaveFunction, Particle1Energy, Particle2Energy,
-			MatrixElement12, MatrixElement11, MatrixElement22, DeltaEnergy, Chemicalpotential, FermiDirac, Linewidth,
+			MatrixElement12, MatrixElement11, MatrixElement22, DeltaEnergy, Chemicalpotential, FermiDirac,
 			LinearConstant, NonLinearConstant, LinearAbsorptionCoefficient, NonLinearAbsorptionCoefficient
 		},
 
@@ -232,7 +233,6 @@ IntrabandAbsorptionCoefficient[InitialState_, FinalState_, Particle_, temperatur
 		
 		Chemicalpotential = - (Gap/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[Mass["Heavy Hole"] / Mass["Electron"]];
 		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
-		Linewidth = 0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2 ;
 		
 		LinearConstant = Divide[
 			Radius[Particle]^2 * ElectronChargeSI^2 * ElectronsPopulation,
@@ -284,7 +284,8 @@ SecondHarmonicGeneration[State1_, State2_, State3_, Particle_, temperature_] :=
 			ElectronChargeSI 		= QuantityMagnitude @ $$ElectronChargeSI,
 			Radius 					= QuantityMagnitude @ $BohrRadius[State1["Semiconductor"], #] &,
 			Mass 					= QuantityMagnitude @ $EffectiveMass[State1["Semiconductor"], #] &,
-			Gap 					= QuantityMagnitude @ $GapEnergy[State1["Semiconductor"], temperature]
+			Gap 					= QuantityMagnitude @ $GapEnergy[State1["Semiconductor"], temperature],
+			Linewidth				= $Linewidth[State1["Semiconductor"], temperature]
 			,
 			ElectronsPopulation = 3 * 10^22
 			,
@@ -292,7 +293,7 @@ SecondHarmonicGeneration[State1_, State2_, State3_, Particle_, temperature_] :=
 			Particle2Model, Particle2WaveFunction, Particle2Energy,
 			Particle3Model, Particle3WaveFunction, Particle3Energy,
 			MatrixElement12, MatrixElement13, MatrixElement23,
-			DeltaEnergy12, DeltaEnergy13, Chemicalpotential, FermiDirac, Linewidth
+			DeltaEnergy12, DeltaEnergy13, Chemicalpotential, FermiDirac
 		},
 
 		Particle1Model = State1[Particle];
@@ -348,7 +349,6 @@ SecondHarmonicGeneration[State1_, State2_, State3_, Particle_, temperature_] :=
 		
 		Chemicalpotential = - (Gap/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[Mass["Heavy Hole"] / Mass["Electron"]];
 		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
-		Linewidth = 0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2 ;
 		
 		LinearConstant = 10^6 * Nest[$JouleToEV, Radius[Particle]^3 * ElectronChargeSI^3 * ElectronsPopulation / VacuumPremittivitySI, 2];
 
@@ -378,7 +378,9 @@ ThirdHarmonicGeneration[State1_, State2_, State3_, State4_, Particle_, temperatu
 			ElectronChargeSI 		= QuantityMagnitude @ $$ElectronChargeSI,
 			Radius 					= QuantityMagnitude @ $BohrRadius[State1["Semiconductor"], #] &,
 			Mass 					= QuantityMagnitude @ $EffectiveMass[State1["Semiconductor"], #] &,
-			Gap 					= QuantityMagnitude @ $GapEnergy[State1["Semiconductor"], temperature]
+			Gap 					= QuantityMagnitude @ $GapEnergy[State1["Semiconductor"], temperature],
+			Linewidth				= $Linewidth[State1["Semiconductor"], temperature]
+
 			,
 			ElectronsPopulation = 3 * 10^22
 			,
@@ -387,7 +389,7 @@ ThirdHarmonicGeneration[State1_, State2_, State3_, State4_, Particle_, temperatu
 			Particle3Model, Particle3WaveFunction, Particle3Energy,
 			Particle4Model, Particle4WaveFunction, Particle4Energy,
 			MatrixElement12, MatrixElement33, MatrixElement34, MatrixElement14,
-			DeltaEnergy12, DeltaEnergy13, DeltaEnergy14, Chemicalpotential, FermiDirac, Linewidth
+			DeltaEnergy12, DeltaEnergy13, DeltaEnergy14, Chemicalpotential, FermiDirac
 		},
 
 		Particle1Model = State1[Particle];
@@ -461,7 +463,6 @@ ThirdHarmonicGeneration[State1_, State2_, State3_, State4_, Particle_, temperatu
 				
 		Chemicalpotential = - (Gap/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[Mass["Heavy Hole"] / Mass["Electron"]];
 		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
-		Linewidth = 0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2 ;
 		
 		LinearConstant = 10^9 * Nest[$JouleToEV, Radius[Particle]^4 * ElectronChargeSI^4 * ElectronsPopulation / VacuumPremittivitySI, 3];
 		
