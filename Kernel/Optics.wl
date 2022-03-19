@@ -266,10 +266,125 @@ IntrabandAbsorptionCoefficient[InitialState_, FinalState_, Particle_, temperatur
 
 			TotalAbsorptionCoefficient = Simplify[LinearAbsorptionCoefficient + NonLinearAbsorptionCoefficient];
 
-			{LinearAbsorptionCoefficient, NonLinearAbsorptionCoefficient, TotalAbsorptionCoefficient}
+			AssociationThread[
+				{"Linear", "Nonlinear", "Total"}
+				,
+				{LinearAbsorptionCoefficient, NonLinearAbsorptionCoefficient, TotalAbsorptionCoefficient}
+			]
 		]
 	];
 IntrabandAbsorptionCoefficient[___] := $$FailureFunctionSignature["Dependencies`Private`IntrabandAbsorptionCoefficient"];
+
+(*
+	Reflective index change
+*)
+
+ClearAll[ReflectiveIndexChange];
+ReflectiveIndexChange[InitialState_, FinalState_, Particle_, temperature_] :=
+	Catch @ Block[
+		{
+			BoltzmannConstantSI 	= QuantityMagnitude @ $$BoltzmannConstantSI,
+			PlanckConstantSI 		= QuantityMagnitude @ $$PlanckConstantSI,
+			VacuumPremittivitySI 	= QuantityMagnitude @ $$VacuumPremittivitySI,
+			ElectronChargeSI 		= QuantityMagnitude @ $$ElectronChargeSI,
+			SpeedOfLightSI 			= QuantityMagnitude @ $$SpeedOfLightSI,
+			Radius 					= QuantityMagnitude @ $BohrRadius[InitialState["Semiconductor"], #] &,
+			Mass 					= QuantityMagnitude @ $EffectiveMass[InitialState["Semiconductor"], #] &,
+			Gap 					= QuantityMagnitude @ $GapEnergy[InitialState["Semiconductor"], temperature],
+			Linewidth				= $Linewidth[InitialState["Semiconductor"], temperature]
+			,
+			Intensity = 10^8, ElectronsPopulation = 3*10^22, InfraredRefractiveIndex = 3.51
+			,
+			Particle1Model, Particle2Model, Particle1WaveFunction, Particle2WaveFunction, Particle1Energy, Particle2Energy,
+			MatrixElement12, MatrixElement11, MatrixElement22, DeltaEnergy, Chemicalpotential, FermiDirac,
+			LinearConstant, NonLinearConstant, LinearAbsorptionCoefficient, NonLinearAbsorptionCoefficient
+		},
+
+		Particle1Model = InitialState[Particle];
+		Particle1WaveFunction = ReplaceAll[
+			Particle1Model["Axial", "WaveFunction"] * Particle1Model["Radial", "WaveFunction"],
+			Global`r -> Max[InitialState["Geometry", "Radial"]] * Radius[Particle]
+		];
+		Particle1Energy = Particle1Model["Axial", "Energy"] + Particle1Model["Radial", "Energy"];
+
+		Particle2Model = FinalState[Particle];
+		Particle2WaveFunction = ReplaceAll[
+			Particle2Model["Axial", "WaveFunction"] * Particle2Model["Radial", "WaveFunction"],
+			Global`r -> Max[FinalState["Geometry", "Radial"]] * Radius[Particle]
+		];
+		Particle2Energy = Particle2Model["Axial", "Energy"] + Particle2Model["Radial", "Energy"];
+
+		MatrixElement12 = Abs @ Integrate[
+			2*Pi * Particle1WaveFunction * Global`z * Particle2WaveFunction
+			,
+			Prepend[
+				InitialState["Geometry", "Axial"],
+				Global`z
+			]
+		];
+		MatrixElement11 = Abs @ Integrate[
+			2*Pi * Particle1WaveFunction * Global`z * Particle1WaveFunction
+			,
+			Prepend[
+				InitialState["Geometry", "Axial"],
+				Global`z
+			]
+		];
+		MatrixElement22 = Abs @ Integrate[
+			2*Pi * Particle2WaveFunction * Global`z * Particle2WaveFunction
+			,
+			Prepend[
+				InitialState["Geometry", "Axial"],
+				Global`z
+			]
+		];
+
+		DeltaEnergy = Abs[Particle2Energy - Particle1Energy]  * 10^3;
+		
+		Chemicalpotential = - (Gap/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[Mass["Heavy Hole"] / Mass["Electron"]];
+		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
+		
+		LinearConstant = $JouleToEV[
+			Divide[
+				10^3 * Radius[Particle]^2 * ElectronChargeSI^2 * ElectronsPopulation,
+				VacuumPremittivitySI * 2*InfraredRefractiveIndex^2
+			]
+		];
+
+		NonLinearConstant = Nest[
+			$JouleToEV,
+			Divide[
+				- 10^9 * Radius[Particle]^4 * ElectronChargeSI^4 * ElectronsPopulation * Intensity,
+				VacuumPremittivitySI^2 * 4*InfraredRefractiveIndex^3 * SpeedOfLightSI * $DielectricConstant[InitialState["Semiconductor"]]
+			],
+			3
+		];
+
+		With[
+			{
+				LightEnergy = Global`LightEnergy
+			},
+
+			LinearAbsorptionCoefficient = Times[
+				LinearConstant * FermiDirac[Particle1Energy] * (1 - FermiDirac[Particle2Energy]) * MatrixElement12^2,
+				(DeltaEnergy - LightEnergy) / ((DeltaEnergy - LightEnergy)^2 + Linewidth^2)
+			];
+
+			NonLinearAbsorptionCoefficient = Times[
+				NonLinearConstant * FermiDirac[Particle1Energy] * (1 - FermiDirac[Particle2Energy]),
+				MatrixElement12^2/((DeltaEnergy - LightEnergy)^2 + Linewidth^2)^2 (4 MatrixElement12^2 (DeltaEnergy-LightEnergy)-(MatrixElement22 - MatrixElement11)^2/(DeltaEnergy^2 + Linewidth^2) ((DeltaEnergy - LightEnergy) (DeltaEnergy (DeltaEnergy - LightEnergy) - Linewidth^2) - Linewidth^2 (2 DeltaEnergy - LightEnergy)))
+			];
+
+			TotalAbsorptionCoefficient = Simplify[LinearAbsorptionCoefficient + NonLinearAbsorptionCoefficient];
+
+			AssociationThread[
+				{"Linear", "Nonlinear", "Total"}
+				,
+				{LinearAbsorptionCoefficient, NonLinearAbsorptionCoefficient, TotalAbsorptionCoefficient}
+			]
+		]
+	];
+ReflectiveIndexChange[___] := $$FailureFunctionSignature["Dependencies`Private`ReflectiveIndexChange"];
 
 (*
 	Second Harmonic Generation
