@@ -217,7 +217,7 @@ StronglyOblateConicalQuantumDot[___] := $$FailureFunctionSignature["Tool`Eigensy
 *)
 
 ClearAll[StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D];
-StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D[Semiconductor_, SemiAxes_, Interaction_, ParticlesNumber_, {ElectricField_, MagneticField_}, {COMNumber_, RelNumber_}] :=
+StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D[Semiconductor_, Gas_, SemiAxes_, Interaction_, ParticlesNumber_, {ElectricField_, MagneticField_}, {COMNumber_, RelNumber_}] :=
 	Catch @ Block[
 		{
 			PlanckConstantSI = QuantityMagnitude @ $$PlanckConstantSI,
@@ -255,19 +255,25 @@ StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D[Semiconductor_, SemiAxes_, I
 				] ^ (ParticlesNumber - 1)
 			] &;
 
-			totalEigensystem = AssociationMap[
-				Association[
-					"Ground" -> groundEnergy[#]
-					,
-					"CenterOfMass" -> centerOfMassEnergy[#]
-					,
-					"Relative" -> relativeEnergy[#]
-					,
-					"WaveFunction" -> waveFunction[#]
-				] &
+			totalEigensystem = Association[
+				"Ground" -> groundEnergy[#]
 				,
-				{"Electron", "Light Hole", "Heavy Hole"}
-			]
+				"CenterOfMass" -> centerOfMassEnergy[#]
+				,
+				"Relative" -> relativeEnergy[#]
+				,
+				"WaveFunction" -> waveFunction[#]
+				,
+				"Property" -> <|
+					"Semiconductor" -> Semiconductor,
+					"Gas" -> Gas,
+					"Geometry" -> SemiAxes,
+					"Interaction" -> Interaction,
+					"Particles" -> ParticlesNumber,
+					"ElectricField" -> ElectricField,
+					"MagneticField" -> MagneticField
+				|>
+			] & [Gas]
 		]
 	];
 StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D"];
@@ -365,7 +371,7 @@ BiconvexLensQuantumDot[___] := $$FailureFunctionSignature["Tool`Eigensystems`Pri
 	Asymmetric Biconvex Lens-Shaped Quantum Dot: 2D Moshinsky
 *)
 
-BiconvexLensQuantumDotWithMoshinsky2D[Semiconductor_, radii_, heights_, Interaction_, ParticlesNumber_, {ElectricField_, MagneticField_}, {COMNumber_, RelNumber_}] :=
+BiconvexLensQuantumDotWithMoshinsky2D[Semiconductor_, Gas_, radii_, heights_, Interaction_, ParticlesNumber_, {ElectricField_, MagneticField_}, {COMNumber_, RelNumber_}] :=
 	Catch @ Block[
 		{
 			PlanckConstantSI = QuantityMagnitude @ $$PlanckConstantSI,
@@ -382,13 +388,14 @@ BiconvexLensQuantumDotWithMoshinsky2D[Semiconductor_, radii_, heights_, Interact
 			{
 				z = Global`z
 			},
-		
+
 			groundEnergy =
 				$JouleToEV @ Divide[
 					ParticlesNumber * PlanckConstantSI^2,
-					4 * EffectiveMass[#] * BohrRadius[#]^2 * Min @ heights^2
+					4 * EffectiveMass[#] * BohrRadius[#]^2 * Min @ SemiAxes^2
 				] &;
 			
+		
 			centerOfMassEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * (COMNumber + 1/2)] &;
 		
 			relativeEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * Min @ Last @ Moshinsky[#] * (RelNumber + (ParticlesNumber - 1) / 2)] &;
@@ -403,19 +410,25 @@ BiconvexLensQuantumDotWithMoshinsky2D[Semiconductor_, radii_, heights_, Interact
 				] ^ (ParticlesNumber - 1)
 			] &;
 
-			totalEigensystem = AssociationMap[
-				Association[
-					"Ground" -> 2 * groundEnergy[#]
-					,
-					"CenterOfMass" -> 2 * centerOfMassEnergy[#]
-					,
-					"Relative" -> 2 * relativeEnergy[#]
-					,
-					"WaveFunction" -> waveFunction[#] * waveFunction[#]
-				] &
+			totalEigensystem = Association[
+				"Ground" -> groundEnergy[#]
 				,
-				{"Electron", "Light Hole", "Heavy Hole"}
-			]
+				"CenterOfMass" -> centerOfMassEnergy[#]
+				,
+				"Relative" -> relativeEnergy[#]
+				,
+				"WaveFunction" -> waveFunction[#] * waveFunction[#]
+				,
+				"Property" -> <|
+					"Semiconductor" -> Semiconductor,
+					"Gas" -> Gas,
+					"Geometry" -> <|"Radii" -> radii, "Heights" -> heights|>,
+					"Interaction" -> Interaction,
+					"Particles" -> ParticlesNumber,
+					"ElectricField" -> ElectricField,
+					"MagneticField" -> MagneticField
+				|>
+			] & [Gas]
 		]
 	];
 BiconvexLensQuantumDot[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`BiconvexLensQuantumDot"];
