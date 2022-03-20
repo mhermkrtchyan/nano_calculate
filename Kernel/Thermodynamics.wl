@@ -5,7 +5,7 @@ Block[{$ContextPath}, Needs["GeneralUtilities`"];];
 ClearAll[GetThermodynamicParameter];
 GeneralUtilities`SetUsage[GetThermodynamicParameter,
 "GetThermodynamicParameter[Model$, Characteristic$]
-     This function gives programmatically acses to shows IP features measured results comparison for given IPlibrary$, IPcategory$ and feature$.
+	This function gives programmatically acses to thermodynamic parameter temparature dependency.
 
 Arguments:
 | Model$   | Dataset with quantum dot eigensystem and other properties |

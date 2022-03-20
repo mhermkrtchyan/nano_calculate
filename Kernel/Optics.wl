@@ -1,4 +1,101 @@
 BeginPackage["Tool`Optics`"];
+
+Block[{$ContextPath}, Needs["GeneralUtilities`"];];
+
+ClearAll[InterbandAbsorptionCoefficient];
+GeneralUtilities`SetUsage[InterbandAbsorptionCoefficient,
+"InterbandAbsorptionCoefficient[InitialState$, FinalState$, Hole$, temperature$]
+    This function gives programmatically acses to interband transition absorption coefficient light energy dependency.
+
+Arguments:
+| InitialState$	| Transition first state |
+| FinalState$   | Transition final state |
+| Hole$   		| \"Light Hole\" or \"Heavy Hole\" |
+| temperature$  | Absolute temperature in Kelvins |
+"
+];
+
+ClearAll[InterbandAbsorptionEdge];
+GeneralUtilities`SetUsage[InterbandAbsorptionEdge,
+"InterbandAbsorptionEdge[InitialState$, FinalState$, Hole$, temperature$]
+    This function gives programmatically acses to interband transition edge.
+
+Arguments:
+| InitialState$	| Transition first state |
+| FinalState$   | Transition final state |
+| Hole$   		| \"Light Hole\" or \"Heavy Hole\" |
+| temperature$  | Absolute temperature in Kelvins |
+"
+];
+
+ClearAll[PhotoluminescenceCoefficient];
+GeneralUtilities`SetUsage[PhotoluminescenceCoefficient,
+"PhotoluminescenceCoefficient[InitialState$, FinalState$, Hole$, temperature$]
+    This function gives programmatically acses to interband transition photoluminescence.
+
+Arguments:
+| InitialState$	| Transition first state |
+| FinalState$   | Transition final state |
+| Hole$   		| \"Light Hole\" or \"Heavy Hole\" |
+| temperature$  | Absolute temperature in Kelvins |
+"
+];
+
+ClearAll[IntrabandAbsorptionCoefficient];
+GeneralUtilities`SetUsage[IntrabandAbsorptionCoefficient,
+"IntrabandAbsorptionCoefficient[InitialState$, FinalState$, Particle$, temperature$]
+    This function gives programmatically acses to intraband transition absorption coefficient light energy dependency.
+
+Arguments:
+| InitialState$	| Transition first state |
+| FinalState$   | Transition final state |
+| Particle$   	| \"Electron\", \"Light Hole\" or \"Heavy Hole\" |
+| temperature$  | Absolute temperature in Kelvins |
+"
+];
+
+ClearAll[ReflectiveIndexChange];
+GeneralUtilities`SetUsage[ReflectiveIndexChange,
+"ReflectiveIndexChange[InitialState$, FinalState$, Particle$, temperature$]
+    This function gives programmatically acses to reflective index change coefficient light energy dependency.
+
+Arguments:
+| InitialState$	| Transition first state |
+| FinalState$   | Transition final state |
+| Particle$   	| \"Electron\", \"Light Hole\" or \"Heavy Hole\" |
+| temperature$  | Absolute temperature in Kelvins |
+"
+];
+
+ClearAll[SecondHarmonicGeneration];
+GeneralUtilities`SetUsage[SecondHarmonicGeneration,
+"SecondHarmonicGeneration[State1$, State2$, State3$, Particle$, temperature$]
+    This function gives programmatically acses to three-level system second harmonic generation coefficient light energy dependency.
+
+Arguments:
+| State1$		| Transition first state |
+| State2$	  	| Transition second state|
+| State3$   	| Transition final state |
+| Particle$   	| \"Electron\", \"Light Hole\" or \"Heavy Hole\" |
+| temperature$  | Absolute temperature in Kelvins |
+"
+];
+
+ClearAll[ThirdHarmonicGeneration];
+GeneralUtilities`SetUsage[ThirdHarmonicGeneration,
+"ThirdHarmonicGeneration[State1$, State2$, State3$, State4$, Particle$, temperature$]
+    This function gives programmatically acses to four-level system third harmonic generation coefficient light energy dependency.
+
+Arguments:
+| State1$		| Transition first state |
+| State2$	  	| Transition second state|
+| State3$   	| Transition third state |
+| State4$   	| Transition final state |
+| Particle$   	| \"Electron\", \"Light Hole\" or \"Heavy Hole\" |
+| temperature$  | Absolute temperature in Kelvins |
+"
+];
+
 Begin["`Private`"]
 
 (*
@@ -46,7 +143,6 @@ $Linewidth					= Tool`Semiconductors`Private`$Linewidth;
 	Interband absorption coefficient
 *)
 
-ClearAll[InterbandAbsorptionCoefficient];
 InterbandAbsorptionCoefficient[InitialState_, FinalState_, Hole_, temperature_] :=
 	Catch @ Block[
 		{
@@ -105,7 +201,6 @@ InterbandAbsorptionCoefficient[___] := $$FailureFunctionSignature["Dependencies`
 	Interband absorption edge
 *)
 
-ClearAll[InterbandAbsorptionEdge];
 InterbandAbsorptionEdge[InitialState_, FinalState_, Hole_, temperature_] :=
 	Catch @ Block[
 		{
@@ -128,7 +223,6 @@ InterbandAbsorptionEdge[___] := $$FailureFunctionSignature["Dependencies`Private
 	PL coefficient
 *)
 
-ClearAll[PhotoluminescenceCoefficient];
 PhotoluminescenceCoefficient[InitialState_, FinalState_, Hole_, temperature_] :=
 	Catch @ Block[
 		{
@@ -160,7 +254,6 @@ PhotoluminescenceCoefficient[___] := $$FailureFunctionSignature["Dependencies`Pr
 	Intraband absorption coefficient
 *)
 
-ClearAll[IntrabandAbsorptionCoefficient];
 IntrabandAbsorptionCoefficient[InitialState_, FinalState_, Particle_, temperature_] :=
 	Catch @ Block[
 		{
@@ -270,7 +363,6 @@ IntrabandAbsorptionCoefficient[___] := $$FailureFunctionSignature["Dependencies`
 	Reflective index change
 *)
 
-ClearAll[ReflectiveIndexChange];
 ReflectiveIndexChange[InitialState_, FinalState_, Particle_, temperature_] :=
 	Catch @ Block[
 		{
@@ -381,7 +473,6 @@ ReflectiveIndexChange[___] := $$FailureFunctionSignature["Dependencies`Private`R
 	Second Harmonic Generation
 *)
 
-ClearAll[SecondHarmonicGeneration];
 SecondHarmonicGeneration[State1_, State2_, State3_, Particle_, temperature_] :=
 	Catch @ Block[
 		{
@@ -475,7 +566,6 @@ SecondHarmonicGeneration[___] := $$FailureFunctionSignature["Dependencies`Privat
 	Third Harmonic Generation
 *)
 
-ClearAll[ThirdHarmonicGeneration];
 ThirdHarmonicGeneration[State1_, State2_, State3_, State4_, Particle_, temperature_] :=
 	Catch @ Block[
 		{
