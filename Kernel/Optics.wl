@@ -43,15 +43,6 @@ $GapEnergy                  = Tool`Semiconductors`Private`$GapEnergy;
 $Linewidth					= Tool`Semiconductors`Private`$Linewidth;
 
 (*
-	Get eigensystems
-*)
-
-Needs["Tool`Eigensystems`"];
-
-ClearAll[StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D];
-StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D = Tool`Eigensystems`Private`StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D;
-
-(*
 	Interband absorption coefficient
 *)
 
