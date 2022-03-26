@@ -323,6 +323,15 @@ IntrabandAbsorptionCoefficient[InitialState_, FinalState_, Particle_, temperatur
 			PlanckConstantSI * VacuumPremittivitySI * $DielectricConstant[InitialState["Semiconductor"]] * SpeedOfLightSI
 		];
 
+		NonLinearConstant = 10^6 * Nest[
+			$JouleToEV,
+			Divide[
+				- Radius[Particle]^4 * ElectronChargeSI^4 * 2*ElectronsPopulation * Intensity,
+				PlanckConstantSI * VacuumPremittivitySI^2 * $DielectricConstant[InitialState["Semiconductor"]] * SpeedOfLightSI^2 * InfraredRefractiveIndex
+			],
+			2
+		];
+
 		With[
 			{
 				LightEnergy = Global`LightEnergy
@@ -331,15 +340,6 @@ IntrabandAbsorptionCoefficient[InitialState_, FinalState_, Particle_, temperatur
 			LinearAbsorptionCoefficient = Times[
 				LinearConstant * FermiDirac[Particle1Energy] * (1 - FermiDirac[Particle2Energy]),
 				LightEnergy * Linewidth *  MatrixElement12^2 / ((DeltaEnergy - LightEnergy)^2 + Linewidth^2)
-			];
-
-			NonLinearConstant = 10^6 * Nest[
-				$JouleToEV,
-				Divide[
-					- Radius[Particle]^4 * ElectronChargeSI^4 * 2*ElectronsPopulation * Intensity,
-					PlanckConstantSI * VacuumPremittivitySI^2 * $DielectricConstant[InitialState["Semiconductor"]] * SpeedOfLightSI^2 * InfraredRefractiveIndex
-				],
-				2
 			];
 
 			NonLinearAbsorptionCoefficient = Times[

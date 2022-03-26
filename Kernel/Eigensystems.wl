@@ -329,7 +329,7 @@ BiconvexLensQuantumDot[Semiconductor_, Radiuses_, Heights_, {ElectricField_, Mag
 			radialEigensystem = {
 				$JouleToEV[PlanckConstantSI * problemFrequency[#] * (2*RadialNumber+Abs[MagneticNumber]+1) + PlanckConstantSI*cyclotronFrequency[#] * MagneticNumber/2],
 				Times[
-					1/Sqrt[2*Pi] * Exp[I*MagneticNumber*angle],
+					1/Sqrt[2*Pi] * Exp[I*MagneticNumber*2*Pi],
 					Sqrt[(Abs @ MagneticNumber + RadialNumber)!/(2^Abs[MagneticNumber] * RadialNumber! * Abs[MagneticNumber]!)],
 					BohrRadius[#],
 					1/(MagneticLength[#]^(Abs[MagneticNumber] + 1)),
