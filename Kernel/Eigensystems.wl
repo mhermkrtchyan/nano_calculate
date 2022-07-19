@@ -392,7 +392,7 @@ BiconvexLensQuantumDotWithMoshinsky2D[Semiconductor_, Gas_, radii_, heights_, In
 			groundEnergy =
 				$JouleToEV @ Divide[
 					ParticlesNumber * PlanckConstantSI^2,
-					4 * EffectiveMass[#] * BohrRadius[#]^2 * Min @ SemiAxes^2
+					4 * EffectiveMass[#] * BohrRadius[#]^2 * Min @ heights^2
 				] &;
 			
 		
