@@ -1,42 +1,28 @@
 BeginPackage["Tool`Potentials`"];
 Begin["`Private`"];
 
-(*
-	Get constants
-*)
-
+(* Get Constants *)
 Needs["Tool`Constants`"];
-
 ClearAll[$$PlanckConstantSI, $$ElectronChargeSI, $$VacuumPremittivitySI];
 $$PlanckConstantSI		= Tool`Constants`Private`$$PlanckConstantSI;
 $$ElectronChargeSI 		= Tool`Constants`Private`$$ElectronChargeSI;
 $$VacuumPremittivitySI	= Tool`Constants`Private`$$VacuumPremittivitySI;
 
-(*
-	Get helpers
-*)
-
+(* Get Helpers *)
 Needs["Tool`Helpers`"];
-
 ClearAll[$$FailureFunctionSignature];
 $FailureFunctionSignature	= Tool`Helpers`Private`$FailureFunctionSignature;
 
-(*
-	Get semiconductor parameters
-*)
-
+(* Get Semiconductor Parameters *)
 Needs["Tool`Semiconductors`"];
-
 ClearAll[$EffectiveMass, $BohrRadius];
 $EffectiveMass	= Tool`Semiconductors`Private`$EffectiveMass;
 $BohrRadius 	= Tool`Semiconductors`Private`$BohrRadius;
 
-(*
-	Confiniments
-*)
+(* Confiniments *)
 
 ClearAll[ParabolicConfinement];
-ParabolicConfinement[semiconductor_?StringQ, direction_?StringQ, frequency_?NumberQ] :=
+ParabolicConfinement[semiconductor_, direction_, frequency_] :=
 	Block[
 		{
 			EffectiveMass = QuantityMagnitude @ $EffectiveMass[semiconductor, "Electron"]
@@ -61,7 +47,7 @@ ParabolicConfinement[semiconductor_?StringQ, direction_?StringQ, frequency_?Numb
 ParabolicConfinement[___] := $FailureFunctionSignature["Tool`Potentials`Private`ParabolicConfinement"];
 
 ClearAll[MPTConfinement];
-MPTConfinement[semiconductor_?StringQ, direction_?StringQ, wellDepth_?NumberQ, wellHalfWidth_?NumberQ] :=
+MPTConfinement[semiconductor_, direction_, wellDepth_, wellHalfWidth_] :=
 	With[
 		{
 			z = Global`z,
@@ -80,7 +66,7 @@ MPTConfinement[semiconductor_?StringQ, direction_?StringQ, wellDepth_?NumberQ, w
 MPTConfinement[___] := $FailureFunctionSignature["Tool`Potentials`Private`MPTConfinement"];
 
 ClearAll[DoubleMPTConfinement];
-DoubleMPTConfinement[semiconductor_?StringQ, direction_?StringQ, wellsDepth_?ListQ, wellsHalfWidth_?ListQ, wellsDistance_?NumberQ] :=
+DoubleMPTConfinement[semiconductor_, direction_, wellsDepth_, wellsHalfWidth_, wellsDistance_] :=
 	With[
 		{
 			z = Global`z,
@@ -105,7 +91,7 @@ DoubleMPTConfinement[semiconductor_?StringQ, direction_?StringQ, wellsDepth_?Lis
 DoubleMPTConfinement[___] := $FailureFunctionSignature["Tool`Potentials`Private`DoubleMPTConfinement"];
 
 ClearAll[MorseConfinement];
-MorseConfinement[semiconductor_?StringQ, direction_?StringQ, wellDepth_?NumberQ, wellHalfWidth_?NumberQ] :=
+MorseConfinement[semiconductor_, direction_, wellDepth_, wellHalfWidth_] :=
 	With[
 		{
 			z = Global`z,
@@ -124,7 +110,7 @@ MorseConfinement[semiconductor_?StringQ, direction_?StringQ, wellDepth_?NumberQ,
 MorseConfinement[___] := $FailureFunctionSignature["Tool`Potentials`Private`MorseConfinement"];
 
 ClearAll[DoubleMorseConfinement];
-DoubleMorseConfinement[semiconductor_?StringQ, direction_?StringQ, wellsDepth_?ListQ, wellsHalfWidth_?ListQ, wellsDistance_?NumberQ] :=
+DoubleMorseConfinement[semiconductor_, direction_, wellsDepth_, wellsHalfWidth_, wellsDistance_] :=
 	With[
 		{
 			z = Global`z,
@@ -149,7 +135,7 @@ DoubleMorseConfinement[semiconductor_?StringQ, direction_?StringQ, wellsDepth_?L
 DoubleMorseConfinement[___] := $FailureFunctionSignature["Tool`Potentials`Private`DoubleMorseConfinement"];
 
 ClearAll[KratzerConfinement];
-KratzerConfinement[semiconductor_?StringQ, direction_?StringQ, wellDepth_?NumberQ, wellHalfWidth_?NumberQ] :=
+KratzerConfinement[semiconductor_, direction_, wellDepth_, wellHalfWidth_] :=
 	With[
 		{
 			z = Global`z,
@@ -172,7 +158,7 @@ KratzerConfinement[___] := $FailureFunctionSignature["Tool`Potentials`Private`Kr
 *)
 
 ClearAll[MoshinskyConfiniment];
-MoshinskyConfiniment[semiconductor_?StringQ, particle_?StringQ, interactionParameter_?NumberQ, semiAxes_?ListQ, particlesNumber_?NumberQ] :=
+MoshinskyConfiniment[semiconductor_, particle_, interactionParameter_, semiAxes_, particlesNumber_] :=
 	Block[
 		{
 			PlanckConstantSI 	= QuantityMagnitude @ $$PlanckConstantSI,
@@ -194,7 +180,7 @@ MoshinskyConfiniment[semiconductor_?StringQ, particle_?StringQ, interactionParam
 MoshinskyConfiniment[___] := $FailureFunctionSignature["Tool`Potentials`Private`MoshinskyConfiniment"];
 
 ClearAll[MoshinskyConfiniment2];
-MoshinskyConfiniment2[semiconductor_?StringQ, particle_?StringQ, interactionParameter_?NumberQ, radii_?ListQ, heights_?ListQ, particlesNumber_?NumberQ] :=
+MoshinskyConfiniment2[semiconductor_, particle_, interactionParameter_, radii_, heights_, particlesNumber_] :=
 	Block[
 		{
 			PlanckConstantSI 	= QuantityMagnitude @ $$PlanckConstantSI,
@@ -216,10 +202,10 @@ MoshinskyConfiniment2[semiconductor_?StringQ, particle_?StringQ, interactionPara
 
 		{frequency, parameter}
 	];	
-MoshinskyConfiniment2[___] := $FailureFunctionSignature["Tool`Potentials`Private`MoshinskyConfiniment"];
+MoshinskyConfiniment2[___] := $FailureFunctionSignature["Tool`Potentials`Private`MoshinskyConfiniment2"];
 
 ClearAll[MoshinskyInteraction];
-MoshinskyInteraction[semiconductor_?StringQ, particle_?StringQ, interactionParameter_?NumberQ, particlesDistance_?NumberQ]:=
+MoshinskyInteraction[semiconductor_, particle_, interactionParameter_, particlesDistance_]:=
 	Block[
 		{
 			BohrRadius = QuantityMagnitude @ $BohrRadius[semiconductor, particle]
@@ -230,7 +216,7 @@ MoshinskyInteraction[semiconductor_?StringQ, particle_?StringQ, interactionParam
 MoshinskyInteraction[___] := $FailureFunctionSignature["Tool`Potentials`Private`MoshinskyInteraction"];
 
 ClearAll[CoulombInteraction];
-CoulombInteraction[semiconductor_?StringQ, particle_?StringQ, interactionParameter_?NumberQ, particlesDistance_?NumberQ]:=
+CoulombInteraction[semiconductor_, particle_, interactionParameter_, particlesDistance_]:=
 	Block[
 		{
 			ElectronChargeSI 		= QuantityMagnitude @ $$ElectronChargeSI[semiconductor, particle],

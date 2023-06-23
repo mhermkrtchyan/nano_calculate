@@ -5,118 +5,49 @@ Block[{$ContextPath}, Needs["GeneralUtilities`"];];
 ClearAll[InterbandAbsorptionCoefficient];
 GeneralUtilities`SetUsage[InterbandAbsorptionCoefficient,
 "InterbandAbsorptionCoefficient[InitialState$, FinalState$, Hole$, temperature$]
-    This function gives programmatically acses to interband transition absorption coefficient light energy dependency.
-
-Arguments:
-| InitialState$	| Transition first state |
-| FinalState$   | Transition final state |
-| Hole$   		| \"Light Hole\" or \"Heavy Hole\" |
-| temperature$  | Absolute temperature in Kelvins |
-"
-];
-
-ClearAll[InterbandAbsorptionEdge];
-GeneralUtilities`SetUsage[InterbandAbsorptionEdge,
-"InterbandAbsorptionEdge[InitialState$, FinalState$, Hole$, temperature$]
-    This function gives programmatically acses to interband transition edge.
-
-Arguments:
-| InitialState$	| Transition first state |
-| FinalState$   | Transition final state |
-| Hole$   		| \"Light Hole\" or \"Heavy Hole\" |
-| temperature$  | Absolute temperature in Kelvins |
-"
+    This function gives programmatically acses to interband transition absorption coefficient light energy dependency."
 ];
 
 ClearAll[PhotoluminescenceCoefficient];
 GeneralUtilities`SetUsage[PhotoluminescenceCoefficient,
 "PhotoluminescenceCoefficient[InitialState$, FinalState$, Hole$, temperature$]
-    This function gives programmatically acses to interband transition photoluminescence.
-
-Arguments:
-| InitialState$	| Transition first state |
-| FinalState$   | Transition final state |
-| Hole$   		| \"Light Hole\" or \"Heavy Hole\" |
-| temperature$  | Absolute temperature in Kelvins |
-"
+    This function gives programmatically acses to interband transition photoluminescence."
 ];
 
 ClearAll[IntrabandAbsorptionCoefficient];
 GeneralUtilities`SetUsage[IntrabandAbsorptionCoefficient,
 "IntrabandAbsorptionCoefficient[InitialState$, FinalState$, Particle$, temperature$]
-    This function gives programmatically acses to intraband transition absorption coefficient light energy dependency.
-
-Arguments:
-| InitialState$	| Transition first state |
-| FinalState$   | Transition final state |
-| Particle$   	| \"Electron\", \"Light Hole\" or \"Heavy Hole\" |
-| temperature$  | Absolute temperature in Kelvins |
-"
+    This function gives programmatically acses to intraband transition absorption coefficient light energy dependency."
 ];
 
 ClearAll[ReflectiveIndexChange];
 GeneralUtilities`SetUsage[ReflectiveIndexChange,
 "ReflectiveIndexChange[InitialState$, FinalState$, Particle$, temperature$]
-    This function gives programmatically acses to reflective index change coefficient light energy dependency.
-
-Arguments:
-| InitialState$	| Transition first state |
-| FinalState$   | Transition final state |
-| Particle$   	| \"Electron\", \"Light Hole\" or \"Heavy Hole\" |
-| temperature$  | Absolute temperature in Kelvins |
-"
+    This function gives programmatically acses to reflective index change coefficient light energy dependency."
 ];
 
 ClearAll[SecondHarmonicGeneration];
 GeneralUtilities`SetUsage[SecondHarmonicGeneration,
 "SecondHarmonicGeneration[State1$, State2$, State3$, Particle$, temperature$]
-    This function gives programmatically acses to three-level system second harmonic generation coefficient light energy dependency.
-
-Arguments:
-| State1$		| Transition first state |
-| State2$	  	| Transition second state|
-| State3$   	| Transition final state |
-| Particle$   	| \"Electron\", \"Light Hole\" or \"Heavy Hole\" |
-| temperature$  | Absolute temperature in Kelvins |
-"
+    This function gives programmatically acses to three-level system second harmonic generation coefficient light energy dependency."
 ];
 
 ClearAll[ThirdHarmonicGeneration];
 GeneralUtilities`SetUsage[ThirdHarmonicGeneration,
 "ThirdHarmonicGeneration[State1$, State2$, State3$, State4$, Particle$, temperature$]
-    This function gives programmatically acses to four-level system third harmonic generation coefficient light energy dependency.
-
-Arguments:
-| State1$		| Transition first state |
-| State2$	  	| Transition second state|
-| State3$   	| Transition third state |
-| State4$   	| Transition final state |
-| Particle$   	| \"Electron\", \"Light Hole\" or \"Heavy Hole\" |
-| temperature$  | Absolute temperature in Kelvins |
-"
+    This function gives programmatically acses to four-level system third harmonic generation coefficient light energy dependency."
 ];
 
 ClearAll[PhotoionisationCrossSection];
 GeneralUtilities`SetUsage[PhotoionisationCrossSection,
 "PhotoionisationCrossSection[InitialState$, FinalState$, Hole$, temperature$]
-    This function gives programmatically acses to photoionisation cross section from light energy dependency.
-
-Arguments:
-| InitialState$	| Transition first state |
-| FinalState$   | Transition final state |
-| Hole$   		| \"Light Hole\" or \"Heavy Hole\" |
-| temperature$  | Absolute temperature in Kelvins |
-"
+    This function gives programmatically acses to photoionisation cross section from light energy dependency."
 ];
 
 Begin["`Private`"]
 
-(*
-	Get constants
-*)
-
+(* Get Constants *)
 Needs["Tool`Constants`"];
-
 ClearAll[$$BoltzmannConstantSI, $$VacuumPremittivitySI, $$PlanckConstantSI, $$ElectronChargeSI, $$SpeedOfLightSI];
 $$BoltzmannConstantSI      = Tool`Constants`Private`$$BoltzmannConstantSI;
 $$VacuumPremittivitySI     = Tool`Constants`Private`$$VacuumPremittivitySI;
@@ -124,38 +55,22 @@ $$PlanckConstantSI         = Tool`Constants`Private`$$PlanckConstantSI;
 $$ElectronChargeSI	       = Tool`Constants`Private`$$ElectronChargeSI;
 $$SpeedOfLightSI           = Tool`Constants`Private`$$SpeedOfLightSI;
 
-(*
-	Get helpers
-*)
-
+(* Get Helpers *)
 Needs["Tool`Helpers`"];
-
-ClearAll[$$FailureFunctionSignature, $$FailureQuantumNumber];
+ClearAll[$$FailureFunctionSignature, $JouleToEV];
 $$FailureFunctionSignature = Tool`Helpers`Private`$FailureFunctionSignature;
-$$FailureQuantumNumber     = Tool`Helpers`Private`$FailureQuantumNumber; 
-
-ClearAll[$JouleToEV, GaussDistribution];
 $JouleToEV                 = Tool`Helpers`Private`$JouleToEV;
-GaussDistribution          = Tool`Helpers`Private`$GaussDistribution;
 
-(*
-	Get semiconductor parameters
-*)
-
+(* Get Semiconductor Parameters *)
 Needs["Tool`Semiconductors`"];
-
 ClearAll[$EffectiveMass, $BohrRadius, $RydbergEnergy, $DielectricConstant, $GapEnergy, $Linewidth];
 $EffectiveMass              = Tool`Semiconductors`Private`$EffectiveMass;
 $BohrRadius        		    = Tool`Semiconductors`Private`$BohrRadius;
-$RydbergEnergy              = Tool`Semiconductors`Private`$RydbergEnergy;
 $DielectricConstant         = Tool`Semiconductors`Private`$DielectricConstant;
 $GapEnergy                  = Tool`Semiconductors`Private`$GapEnergy;
 $Linewidth					= Tool`Semiconductors`Private`$Linewidth;
 
-(*
-	Interband absorption coefficient
-*)
-
+(* Interband absorption coefficient *)
 InterbandAbsorptionCoefficient[InitialState_, FinalState_, Hole_, temperature_] :=
 	Catch @ Block[
 		{
@@ -210,32 +125,7 @@ InterbandAbsorptionCoefficient[InitialState_, FinalState_, Hole_, temperature_] 
 	];
 InterbandAbsorptionCoefficient[___] := $$FailureFunctionSignature["Dependencies`Private`InterbandAbsorptionCoefficient"];
 
-(*
-	Interband absorption edge
-*)
-
-InterbandAbsorptionEdge[InitialState_, FinalState_, Hole_, temperature_] :=
-	Catch @ Block[
-		{
-			GapEnergy = QuantityMagnitude @ $GapEnergy[InitialState["Semiconductor"], temperature]
-			,
-			HoleModel, HoleEnergy, ElectronModel, ElectronEnergy
-		},
-
-		HoleModel = InitialState[Hole];
-		HoleEnergy = HoleModel["Axial", "Energy"] + HoleModel["Radial", "Energy"];
-
-		ElectronModel = FinalState["Electron"];
-		ElectronEnergy = ElectronModel["Axial", "Energy"] + ElectronModel["Radial", "Energy"];
-		
-		ElectronEnergy + HoleEnergy + GapEnergy
-	];
-InterbandAbsorptionEdge[___] := $$FailureFunctionSignature["Dependencies`Private`InterbandAbsorptionEdge"];
-
-(*
-	PL coefficient
-*)
-
+(* Photoluminescence coefficient *)
 PhotoluminescenceCoefficient[InitialState_, FinalState_, Hole_, temperature_] :=
 	Catch @ Block[
 		{
@@ -262,10 +152,7 @@ PhotoluminescenceCoefficient[InitialState_, FinalState_, Hole_, temperature_] :=
 	];
 PhotoluminescenceCoefficient[___] := $$FailureFunctionSignature["Dependencies`Private`PhotoluminescenceCoefficient"];
 
-(*
-	Intraband absorption coefficient
-*)
-
+(* Intraband absorption coefficient *)
 IntrabandAbsorptionCoefficient[InitialState_, FinalState_, Particle_, temperature_] :=
 	Catch @ Block[
 		{
@@ -375,10 +262,7 @@ IntrabandAbsorptionCoefficient[InitialState_, FinalState_, Particle_, temperatur
 	];
 IntrabandAbsorptionCoefficient[___] := $$FailureFunctionSignature["Dependencies`Private`IntrabandAbsorptionCoefficient"];
 
-(*
-	Reflective index change
-*)
-
+(* Reflective index change *)
 ReflectiveIndexChange[InitialState_, FinalState_, Particle_, temperature_] :=
 	Catch @ Block[
 		{
@@ -489,10 +373,7 @@ ReflectiveIndexChange[InitialState_, FinalState_, Particle_, temperature_] :=
 	];
 ReflectiveIndexChange[___] := $$FailureFunctionSignature["Dependencies`Private`ReflectiveIndexChange"];
 
-(*
-	Second Harmonic Generation
-*)
-
+(* Second Harmonic Generation *)
 SecondHarmonicGeneration[State1_, State2_, State3_, Particle_, temperature_] :=
 	Catch @ Block[
 		{
@@ -586,10 +467,7 @@ SecondHarmonicGeneration[State1_, State2_, State3_, Particle_, temperature_] :=
 	];
 SecondHarmonicGeneration[___] := $$FailureFunctionSignature["Dependencies`Private`SecondHarmonicGeneration"];
 
-(*
-	Third Harmonic Generation
-*)
-
+(* Third Harmonic Generation *)
 ThirdHarmonicGeneration[State1_, State2_, State3_, State4_, Particle_, temperature_] :=
 	Catch @ Block[
 		{
@@ -706,10 +584,7 @@ ThirdHarmonicGeneration[State1_, State2_, State3_, State4_, Particle_, temperatu
 	];
 ThirdHarmonicGeneration[___] := $$FailureFunctionSignature["Dependencies`Private`ThirdHarmonicGeneration"];
 
-(*
-	Photoionisation cross section
-*)
-
+(* Photoionisation cross section *)
 PhotoionisationCrossSection[InitialState_, FinalState_, Hole_, temperature_] :=
 	Catch @ Block[
 		{
@@ -772,279 +647,6 @@ PhotoionisationCrossSection[InitialState_, FinalState_, Hole_, temperature_] :=
 		]
 	];
 PhotoionisationCrossSection[___] := $$FailureFunctionSignature["Dependencies`Private`PhotoionisationCrossSection"];
-
-(*
-	Ensemble Effects // Need To Edit
-*)
-
-ClearAll[GetSPCQDRaduisDependency];
-GetSPCQDRaduisDependency[pMaterial_, pHole_, eField_, {meQN_, reQN_, aeQN_, mhQN_, rhQN_, ahQN_}] :=
-	Block[
-		{
-			getAxialDependency, axialDependency, getRadialDependency, radialDependency, fullEnergyDependency,
-			numberHole 
-		},
-
-		numberHole =If[pHole == "Light Hole",
-			2,
-			3
-		];
-
-		getAxialDependency =
-			{
-				#,
-				Plus[
-					QuantityMagnitude @ StronglyProlateConicalQuantumDotEigensystem[
-						pMaterial,
-						#,
-						10 * #,
-						eField,
-						meQN,
-						reQN,
-						aeQN
-					][[1, 1, 1]]
-					,
-					QuantityMagnitude @ StronglyProlateConicalQuantumDotEigensystem[
-						pMaterial,
-						#,
-						10 * #,
-						eField,
-						mhQN,
-						rhQN,
-						ahQN
-					][[1, numberHole, 1]]
-				]
-			} & /@ Range[10];
-
-		axialDependency =
-			Normal[
-				LinearModelFit[
-					getAxialDependency,
-					1/R^2,
-					R
-				]
-			];
-		
-		getRadialDependency = 
-			{
-				#
-				,
-				Plus[
-					QuantityMagnitude @ StronglyProlateConicalQuantumDotEigensystem[
-						pMaterial,
-						#,
-						10 * #,
-						eField,
-						mhQN,
-						rhQN,
-						ahQN
-					][[2, 1, 1]]
-					,
-					QuantityMagnitude @ StronglyProlateConicalQuantumDotEigensystem[
-						pMaterial,
-						#,
-						10 * #,
-						eField,
-						mhQN,
-						rhQN,
-						ahQN
-					][[2, numberHole, 1]]	
-				]
-			}& /@ Range[10];
-
-		radialDependency =
-			Normal[
-				LinearModelFit[
-					getRadialDependency,
-					1/R^2,
-					R
-				]
-			];
-
-		fullEnergyDependency = 
-			Simplify[
-				axialDependency + radialDependency
-			]
-
-	];
-GetSPCQDRaduisDependency[___] := $$FailureFunctionSignature["Dependencies`Private`GetSPCQDRaduisDependency"];
-
-ClearAll[GetSOCQDRaduisDependency];
-GetSOCQDRaduisDependency[pMaterial_, pHole_, eField_, {meQN_, reQN_, aeQN_, mhQN_, rhQN_, ahQN_}]:=
-	Block[
-		{
-			getRadialDependency, radialDependency, getAxialDependency, axialDependency, fullEnergyDependency,
-			numberHole
-		},
-
-		numberHole =If[pHole == "Light Hole",
-			2,
-			3
-		];
-		
-		getRadialDependency =
-			{
-				#,
-				Plus[
-					QuantityMagnitude @ StronglyOblateConicalQuantumDotEigensystem[
-						pMaterial,
-						10 * #,
-						#,
-						eField,
-						meQN,
-						reQN,
-						aeQN
-					][[1, 1, 1]]
-					,
-					QuantityMagnitude @ StronglyOblateConicalQuantumDotEigensystem[
-						pMaterial,
-						10 * #,
-						#,
-						eField,
-						mhQN,
-						rhQN,
-						ahQN
-					][[1, numberHole, 1]]
-				]
-			} & /@ Range[10];
-
-		radialDependency =
-			Normal[
-				LinearModelFit[
-					getRadialDependency,
-					1/R^2,
-					R
-				]
-			];
-		
-		getAxialDependency = 
-			{
-				#
-				,
-				Plus[
-					QuantityMagnitude @ StronglyOblateConicalQuantumDotEigensystem[
-						pMaterial,
-						10 * #,
-						#,
-						eField,
-						mhQN,
-						rhQN,
-						ahQN
-					][[2, 1, 1]]
-					,
-					QuantityMagnitude @ StronglyOblateConicalQuantumDotEigensystem[
-						pMaterial,
-						10 * #,
-						#,
-						eField,
-						mhQN,
-						rhQN,
-						ahQN
-					][[2, numberHole, 1]]	
-				]
-			}  & /@ Range[10];
-		
-		axialDependency =
-			Normal[
-				LinearModelFit[
-					getAxialDependency,
-					1/R^2,
-					R
-				]
-			];
-
-		fullEnergyDependency = 
-			Simplify[
-				radialDependency + axialDependency
-			]
-
-	];
-GetSOCQDRaduisDependency[___] := $$FailureFunctionSignature["Dependencies`Private`GetSOCQDRaduisDependency"];
-
-ClearAll[EnsembleEffectForOneTransition];
-EnsembleEffectForOneTransition[pMaterial_, Model_, pHole_, eField_, LightFrequencyGap_, {meQN_, reQN_, aeQN_, mhQN_, rhQN_, ahQN_}] :=
-	Block[
-		{
-			EnergyRadiusDependency,
-			EnergyRadiusDependencyCoefficient1, EnergyRadiusDependencyCoefficient2, EnergyRadiusDependencyCoefficient,
-			gauss, shift, intergrate, absorption, numberHole
-		},
-
-		numberHole = If[pHole == "Light Hole",
-			2,
-			3
-		];
-
-		EnergyRadiusDependency = 
-			If[Model == "SPCQD",
-				GetSPCQDRaduisDependency[pMaterial, pHole, eField, {meQN, reQN, aeQN, mhQN, rhQN, ahQN}],
-				GetSOCQDRaduisDependency[pMaterial, pHole, eField, {meQN, reQN, aeQN, mhQN, rhQN, ahQN}]
-			];
-	
-		EnergyRadiusDependencyCoefficient1 = First @ EnergyRadiusDependency;
-		EnergyRadiusDependencyCoefficient2 = Numerator @ Last @ EnergyRadiusDependency;
-		EnergyRadiusDependencyCoefficient  = (LightFrequencyGap - EnergyRadiusDependencyCoefficient1) / EnergyRadiusDependencyCoefficient2;
-	
-		gauss = 
-			GaussDistribution[
-				EnergyRadiusDependencyCoefficient^-(1/2)
-			];
-
-		shift = EnergyRadiusDependencyCoefficient^(-3/2);
-	
-		intergrate = 
-			NIntegrate[
-				Times[
-					StronglyProlateConicalQuantumDotEigensystem[
-						pMaterial,
-						5,
-						0.5,
-						eField,
-						meQN,
-						reQN,
-						aeQN
-					][[1, 1, 2]],
-					StronglyProlateConicalQuantumDotEigensystem[
-						pMaterial,
-						5,
-						0.5,
-						eField,
-						meQN,
-						reQN,
-						aeQN
-					][[1, numberHole, 2]]
-				],
-				{Tool`Eigensystems`Private`z, 0, 0.5},
-				{Tool`Eigensystems`Private`r, 0, 0.5}
-			];
-	
-		absorption = intergrate * gauss * shift / (2 * EnergyRadiusDependencyCoefficient2)
-	]
-EnsembleEffectForOneTransition[___] := $$FailureFunctionSignature["Dependencies`Private`EnsembleEffectForOneTransition"];
-
-ClearAll[EnsembleEffectForAllTransitions];
-EnsembleEffectForAllTransitions[pMaterial_, Model_, pHole_, eField_, LightFrequencyGap_] :=
-	Block[
-		{
-			oneTransition = EnsembleEffectForOneTransition[pMaterial, Model, pHole, eField, LightFrequencyGap, #] &,
-			PossibleQNValues = Tuples[{{-1, 0, 1}, {1, 2}, {0, 1, 2}}], allQNValues
-		},
-		allQNValues = 
-			Map[
-				Flatten[
-					Append[
-						PossibleQNValues[[#]],
-						PossibleQNValues[[#]]
-					]
-				] &,
-				Range[Length @ PossibleQNValues]
-			];
-		
-		Simplify[
-			Plus @@ (oneTransition /@ allQNValues)
-		]	
-	];	
-EnsembleEffectForAllTransitions[___] := $$FailureFunctionSignature["Dependencies`Private`EnsembleEffectForAllTransitions"];
 
 End[];
 EndPackage[];

@@ -1,61 +1,36 @@
 BeginPackage["Tool`Eigensystems`"];
 Begin["`Private`"];
 
-(*
-	Get constants
-*)
-
+(* Get Constants *)
 Needs["Tool`Constants`"];
-
-ClearAll[$$PlanckConstantSI, $$ElectronChargeSI, $$ElectronChargeCGS, $$SpeedOfLightSI, $$ElectronChargeSI, $$VacuumPremittivitySI];
+ClearAll[$$PlanckConstantSI, $$ElectronChargeSI, $$ElectronChargeCGS, $$SpeedOfLightSI];
 $$PlanckConstantSI		= Tool`Constants`Private`$$PlanckConstantSI;
 $$ElectronChargeSI		= Tool`Constants`Private`$$ElectronChargeSI;
 $$ElectronChargeCGS		= Tool`Constants`Private`$$ElectronChargeCGS;
 $$SpeedOfLightSI		= Tool`Constants`Private`$$SpeedOfLightSI;
-$$VacuumPremittivitySI	= Tool`Constants`Private`$$VacuumPremittivitySI;
 
-(*
-	Get helpers
-*)
-
+(* Get Helpers *)
 Needs["Tool`Helpers`"];
-
-ClearAll[$FailureFunctionSignature, $FailureQuantumNumber];
+ClearAll[$FailureFunctionSignature, $JouleToEV];
 $$FailureFunctionSignature	= Tool`Helpers`Private`$FailureFunctionSignature;
-$$FailureQuantumNumber		= Tool`Helpers`Private`$FailureQuantumNumber;
-
-ClearAll[$JouleToEV];
 $JouleToEV					= Tool`Helpers`Private`$JouleToEV;
 
-(*
-	Get semiconductor parameters
-*)
-
+(* Get Semiconductor Parameters *)
 Needs["Tool`Semiconductors`"];
-
-ClearAll[$EffectiveMass, $BohrRadius, $RydbergEnergy, $DielectricConstant, $GapEnergy];
+ClearAll[$EffectiveMass, $BohrRadius, $RydbergEnergy, $GapEnergy];
 $EffectiveMass			= Tool`Semiconductors`Private`$EffectiveMass;
 $BohrRadius				= Tool`Semiconductors`Private`$BohrRadius;
 $RydbergEnergy			= Tool`Semiconductors`Private`$RydbergEnergy;
-$DielectricConstant		= Tool`Semiconductors`Private`$DielectricConstant;
 $GapEnergy              = Tool`Semiconductors`Private`$GapEnergy;
 
-(*
-	Get confining potentials
-*)
-
+(* Get Potentials *)
 Needs["Tool`Potentials`"];
-
-ClearAll[DoubleMorseConfinement, MoshinskyConfiniment, MoshinskyConfiniment2];
-DoubleMorseConfinement     	= Tool`Potentials`Private`DoubleMorseConfinement;
+ClearAll[MoshinskyConfiniment, MoshinskyConfiniment2];
 MoshinskyConfiniment       	= Tool`Potentials`Private`MoshinskyConfiniment;
 MoshinskyConfiniment2		= Tool`Potentials`Private`MoshinskyConfiniment2;
 
-(*
-	Strongly Prolate Conical Quantum Dot
-*)
-
-ClearAll[StronglyProlateConicalQuantumDot];
+(* Conical Quantum Dot *)
+ClearAll[StronglyProlateConicalQuantumDot, StronglyOblateConicalQuantumDot];
 StronglyProlateConicalQuantumDot[Semiconductor_, BaseRadius_, Height_, {ElectricField_, MagneticField_}, {MagneticNumber_, RadialNumber_, AxialNumber_}] :=
 	Catch @ Block[
 		{
@@ -125,11 +100,6 @@ StronglyProlateConicalQuantumDot[Semiconductor_, BaseRadius_, Height_, {Electric
 	];
 StronglyProlateConicalQuantumDot[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`StronglyProlateConicalQuantumDot"];
 
-(*
-	Strongly Oblate Conical Quantum Dot
-*)
-
-ClearAll[StronglyOblateConicalQuantumDot];
 StronglyOblateConicalQuantumDot[Semiconductor_, BaseRadius_, Height_, {ElectricField_, MagneticField_}, {MagneticNumber_, RadialNumber_, AxialNumber_}] :=
 	Catch @ Block[
 		{
@@ -213,11 +183,8 @@ StronglyOblateConicalQuantumDot[Semiconductor_, BaseRadius_, Height_, {ElectricF
 	]
 StronglyOblateConicalQuantumDot[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`StronglyOblateConicalQuantumDot"];
 
-(*
-	Strongly Prolate Ellipsoidal Quantum Dot: 1D Moshinsky
-*)
-
-ClearAll[StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D];
+(* Moshinsky 1D/2D in Quantum Dot *)
+ClearAll[StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D, BiconvexLensQuantumDotWithMoshinsky2D];
 StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D[Semiconductor_, Gas_, SemiAxes_, Interaction_, ParticlesNumber_, {ElectricField_, MagneticField_}, {COMNumber_, RelNumber_}] :=
 	Catch @ Block[
 		{
@@ -279,11 +246,70 @@ StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D[Semiconductor_, Gas_, SemiAx
 	];
 StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D"];
 
-(*
-	Asymmetric Biconvex Lens-Shaped Quantum Dot
-*)
+BiconvexLensQuantumDotWithMoshinsky2D[Semiconductor_, Gas_, radii_, heights_, Interaction_, ParticlesNumber_, {ElectricField_, MagneticField_}, {COMNumber_, RelNumber_}] :=
+	Catch @ Block[
+		{
+			PlanckConstantSI = QuantityMagnitude @ $$PlanckConstantSI,
+			
+			BohrRadius       = QuantityMagnitude @ $BohrRadius[Semiconductor, #] &,
+			EffectiveMass    = QuantityMagnitude @ $EffectiveMass[Semiconductor, #] &,
+			
+			Moshinsky        = MoshinskyConfiniment2[Semiconductor, #, Interaction, radii, heights, ParticlesNumber] &,
+			
+			groundEnergy, centerOfMassEnergy, relativeEnergy, waveFunction, totalEigensystem
+		},
 
-ClearAll[BiconvexLensQuantumDot, BiconvexLensQuantumDotWithPressure];
+		With[
+			{
+				z = Global`z
+			},
+
+			groundEnergy =
+				$JouleToEV @ Divide[
+					2 * ParticlesNumber * PlanckConstantSI^2,
+					4 * EffectiveMass[#] * BohrRadius[#]^2 * Min @ heights^2
+				] &;
+			
+		
+			centerOfMassEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * (2*COMNumber + 1)] &;
+		
+			relativeEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * Min @ Last @ Moshinsky[#] * (2*(ParticlesNumber-1)*RelNumber+ParticlesNumber-1)] &;
+
+			waveFunction = Times[
+				1/Sqrt[2^COMNumber * COMNumber!] * (1/Pi) ^ 0.25 * Exp[-Sqrt[ParticlesNumber]^2 * z^2 / 2] * HermiteH[COMNumber, Sqrt[ParticlesNumber] * z]
+				,
+				Times[
+					1/Sqrt[2^RelNumber * RelNumber!] * (Min @ Last[Moshinsky[#]]/Pi) ^ 0.25,
+					Exp[-(Sqrt[(ParticlesNumber - 1)/ParticlesNumber] * z - 1/(ParticlesNumber - 1)*(ParticlesNumber - 1) * z)^2 / 2],
+					HermiteH[RelNumber, Sqrt[Last[Moshinsky[#]]] * (Sqrt[(ParticlesNumber - 1)/ParticlesNumber] * z - 1/(ParticlesNumber - 1) * (ParticlesNumber - 1) * z)]
+				] ^ (ParticlesNumber - 1)
+			] &;
+
+			totalEigensystem = Association[
+				"Ground" -> groundEnergy[#]
+				,
+				"CenterOfMass" -> centerOfMassEnergy[#]
+				,
+				"Relative" -> relativeEnergy[#]
+				,
+				"WaveFunction" -> waveFunction[#] * waveFunction[#]
+				,
+				"Property" -> <|
+					"Semiconductor" -> Semiconductor,
+					"Gas" -> Gas,
+					"Geometry" -> <|"Radii" -> radii, "Heights" -> heights|>,
+					"Interaction" -> Interaction,
+					"Particles" -> ParticlesNumber,
+					"ElectricField" -> ElectricField,
+					"MagneticField" -> MagneticField
+				|>
+			] & [Gas]
+		]
+	];
+BiconvexLensQuantumDotWithMoshinsky2D[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`BiconvexLensQuantumDotWithMoshinsky2D"];
+
+(* Lens-Shaped Quantum Dot *)
+ClearAll[BiconvexLensQuantumDot];
 BiconvexLensQuantumDot[Semiconductor_, Radiuses_, Heights_, {ElectricField_, MagneticField_}, {MagneticNumber_, RadialNumber_, AxialNumber_}] :=
 	Block[
 		{
@@ -368,246 +394,6 @@ BiconvexLensQuantumDot[Semiconductor_, Radiuses_, Heights_, {ElectricField_, Mag
 		]
 	];
 BiconvexLensQuantumDot[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`BiconvexLensQuantumDot"];
-
-(*
-	Asymmetric Biconvex Lens-Shaped Quantum Dot: 2D Moshinsky
-*)
-
-BiconvexLensQuantumDotWithMoshinsky2D[Semiconductor_, Gas_, radii_, heights_, Interaction_, ParticlesNumber_, {ElectricField_, MagneticField_}, {COMNumber_, RelNumber_}] :=
-	Catch @ Block[
-		{
-			PlanckConstantSI = QuantityMagnitude @ $$PlanckConstantSI,
-			
-			BohrRadius       = QuantityMagnitude @ $BohrRadius[Semiconductor, #] &,
-			EffectiveMass    = QuantityMagnitude @ $EffectiveMass[Semiconductor, #] &,
-			
-			Moshinsky        = MoshinskyConfiniment2[Semiconductor, #, Interaction, radii, heights, ParticlesNumber] &,
-			
-			groundEnergy, centerOfMassEnergy, relativeEnergy, waveFunction, totalEigensystem
-		},
-
-		With[
-			{
-				z = Global`z
-			},
-
-			groundEnergy =
-				$JouleToEV @ Divide[
-					2 * ParticlesNumber * PlanckConstantSI^2,
-					4 * EffectiveMass[#] * BohrRadius[#]^2 * Min @ heights^2
-				] &;
-			
-		
-			centerOfMassEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * (2*COMNumber + 1)] &;
-		
-			relativeEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * Min @ Last @ Moshinsky[#] * (2*(ParticlesNumber-1)*RelNumber+ParticlesNumber-1)] &;
-
-			waveFunction = Times[
-				1/Sqrt[2^COMNumber * COMNumber!] * (1/Pi) ^ 0.25 * Exp[-Sqrt[ParticlesNumber]^2 * z^2 / 2] * HermiteH[COMNumber, Sqrt[ParticlesNumber] * z]
-				,
-				Times[
-					1/Sqrt[2^RelNumber * RelNumber!] * (Min @ Last[Moshinsky[#]]/Pi) ^ 0.25,
-					Exp[-(Sqrt[(ParticlesNumber - 1)/ParticlesNumber] * z - 1/(ParticlesNumber - 1)*(ParticlesNumber - 1) * z)^2 / 2],
-					HermiteH[RelNumber, Sqrt[Last[Moshinsky[#]]] * (Sqrt[(ParticlesNumber - 1)/ParticlesNumber] * z - 1/(ParticlesNumber - 1) * (ParticlesNumber - 1) * z)]
-				] ^ (ParticlesNumber - 1)
-			] &;
-
-			totalEigensystem = Association[
-				"Ground" -> groundEnergy[#]
-				,
-				"CenterOfMass" -> centerOfMassEnergy[#]
-				,
-				"Relative" -> relativeEnergy[#]
-				,
-				"WaveFunction" -> waveFunction[#] * waveFunction[#]
-				,
-				"Property" -> <|
-					"Semiconductor" -> Semiconductor,
-					"Gas" -> Gas,
-					"Geometry" -> <|"Radii" -> radii, "Heights" -> heights|>,
-					"Interaction" -> Interaction,
-					"Particles" -> ParticlesNumber,
-					"ElectricField" -> ElectricField,
-					"MagneticField" -> MagneticField
-				|>
-			] & [Gas]
-		]
-	];
-BiconvexLensQuantumDotWithMoshinsky2D[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`BiconvexLensQuantumDotWithMoshinsky2D"];
-
-(*
-	Vertical Coupled Quantum Dot  // Need To Edit
-*)
-
-ClearAll[CylindricalQDsWithDoubleMorse];
-CylindricalQDsWithDoubleMorse[Semiconductor_, Depths_, HalfWidths_, WellDistance_, {ElectricField_, MagneticField_}, {MagneticNumber_, RadialNumber_, AxialNumber_}] :=
-	Catch @ Block[
-		{
-			PlanckConstantSI 		= QuantityMagnitude @ $$PlanckConstantSI,			
-			EffectiveMass    		= QuantityMagnitude @ $EffectiveMass[Semiconductor, #] &,
-			BohrRadius           	= QuantityMagnitude @ $BohrRadius[Semiconductor, #] &,
-			RydbergEnergy          	= QuantityMagnitude @ $RydbergEnergy[Semiconductor, #] &,
-
-			confinementPotential 	= DoubleMorseConfinement[Semiconductor, "Axial", Depths, HalfWidths, WellDistance],
-			cylindricalQDDiameter = 2 WellDistance,
-			
-			axialEigensystem, radialEigensystem, totalEigensystem
-		},
-
-		With[
-			{
-				r = Global`r, z = Global`z
-			},
-
-			axialEigensystem =
-				Times[
-					RydbergEnergy[#],
-					NDEigensystem[
-						{
-							-Laplacian[waveFunction[z], {z}] + confinementPotential * waveFunction[z],
-							DirichletCondition[waveFunction[z] == 0, True]
-						},
-						waveFunction[z],
-						{z, -2 WellDistance , 2 WellDistance},
-						5
-					][[All, AxialNumber + 1]]
-				] &;
-			
-			radialEigensystem =
-				{
-					$JouleToEV[Pi^2 * PlanckConstantSI^2 * RadialNumber^2 / (2 * EffectiveMass[#] * BohrRadius[#]^2 * cylindricalQDDiameter^2)],
-					Sqrt[2 / cylindricalQDDiameter] * Sin[Pi * RadialNumber * r / cylindricalQDDiameter]
-				} &;
-
-			totalEigensystem = AssociationMap[
-				Association[
-					"Axial" -> AssociationThread[
-						{"Energy", "WaveFunction"} -> axialEigensystem[#]
-					]
-					,
-					"Radial" -> AssociationThread[
-						{"Energy", "WaveFunction"} -> radialEigensystem[#]
-					]
-				] &
-				,
-				{"Electron", "Light Hole", "Heavy Hole"}
-			]
-		]
-
-	];
-CylindricalQDsWithDoubleMorse[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`CylindricalQDsWithDoubleMorse"];
-
-ClearAll[CylindricalQDsWithDoubleMorseImpurityVariation];
-CylindricalQDsWithDoubleMorseImpurityVariation[semiconductor_, depths_, halfWidths_, distance_][{RadialNumber_, AxialNumber_}] :=
-	Block[
-		{
-			confinementPotential   = DoubleMorseConfinement[semiconductor, "Axial", depths, halfWidths, distance],
-			eigensystem = CylindricalQDsWithDoubleMorse[semiconductor, depths, halfWidths, distance][{RadialNumber, AxialNumber}],
-			
-			ElectronChargeSI     = QuantityMagnitude @ $$ElectronChargeSI,
-			VacuumPremittivitySI = QuantityMagnitude @ $$VacuumPremittivitySI,
-			Rydberg              = QuantityMagnitude @ $RydbergEnergy[semiconductor, "Electron"],
-			Radius               = QuantityMagnitude @ $BohrRadius[semiconductor, "Electron"],
-			$DielectricConstant   = QuantityMagnitude @ $DielectricConstant[semiconductor],
-			
-			cylindricalQDDiameter = 2 distance,
-			nonImpurityWaveFunction, nonimpurityHamiltonian, nonImpurityEnergy,
-			impurityCoordinates, impurityHamiltonian, totalHamiltonian,
-			normalizationCoefficient, trialWaveFunction, trialEnergy, impurityEnergy
-		},
-		
-		With[
-			{
-				r = Global`r, z = Global`z, angle = Global`angle,
-				rImpurity = 0, zImpurity = 0
-			},
-	
-			nonImpurityWaveFunction = Last@eigensystem["Electron", "Axial"] * Last@eigensystem["Electron", "Radial"];	
-			nonImpurityEnergy = First@eigensystem["Electron", "Axial"] + First@eigensystem["Electron", "Radial"];
-			
-			nonimpurityHamiltonian = -Laplacian[#, {r}] - 1/r * D[#, r] - Laplacian[#, {angle}]/r^2 - Laplacian[#, {z}] + confinementPotential * # &;
-	
-			impurityCoordinates = Sqrt[r^2 + rImpurity^2 - r * rImpurity * Cos[angle] + (z - zImpurity)^2];
-			impurityHamiltonian = - 1/Rydberg * $JouleToEV[ElectronChargeSI^2 / (4 * Pi * $DielectricConstant * VacuumPremittivitySI)] / impurityCoordinates * # &;
-
-			totalHamiltonian = nonimpurityHamiltonian[#] + impurityHamiltonian[#] &;
-
-			normalizationCoefficient = Function[
-				variation,
-				Power[
-					Quiet @ NIntegrate[
-						Exp[-2 * variation * impurityCoordinates] * Abs[nonImpurityWaveFunction]^2 * r,
-						{r, 0, 0.5 cylindricalQDDiameter}, {angle, 0, 2 Pi}, {z, -2 distance, 2 distance}
-					],
-					- 1/2
-				]
-			];
-
-			trialWaveFunction = Function[
-				variation,
-				normalizationCoefficient[variation] * nonImpurityWaveFunction * Exp[-variation * impurityCoordinates]
-			];
-
-			trialEnergy = Function[
-				variation,
-				Quiet @ NIntegrate[
-					Conjugate @ trialWaveFunction[variation] * totalHamiltonian[trialWaveFunction[variation]] * r,
-					{r, 0, 0.5 cylindricalQDDiameter}, {angle, 0, 2 Pi}, {z, -2 distance, 2 distance}
-				]
-			];
-
-			impurityEnergy = Min @ Map[
-				trialEnergy[#] &
-				,
-				Range[0, 1, 0.1]
-			] * Rydberg;
-
-				<|
-					"Without impurity energy" -> nonImpurityEnergy,
-					"With impurity energy"    -> impurityEnergy,
-					"Binding energy"          -> nonImpurityEnergy - impurityEnergy
-				|>
-		]
-	];
-CylindricalQDsWithDoubleMorseImpurityVariation[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`CylindricalQDsWithDoubleMorseImpurityVariation"];
-
-ClearAll[CylindricalQDsWithDoubleMorseImpurityHeisenberg];
-CylindricalQDsWithDoubleMorseImpurityHeisenberg[semiconductor_, depths_, halfWidths_, distance_][{RadialNumber_, AxialNumber_}] :=
-	Block[
-		{
-			eigensystem = CylindricalQDsWithDoubleMorse[semiconductor, depths, halfWidths, distance][{RadialNumber, AxialNumber}],			
-			
-			ElectronChargeSI     = QuantityMagnitude @ $$ElectronChargeSI,
-			PlanckConstantSI     = QuantityMagnitude @ $$PlanckConstantSI,
-			VacuumPremittivitySI = QuantityMagnitude @ $$VacuumPremittivitySI,
-			EffMass              = QuantityMagnitude @ $EffectiveMass[semiconductor, #] &,
-			Rydberg              = QuantityMagnitude @ $RydbergEnergy[semiconductor, #] &,
-			Radius               = QuantityMagnitude @ $BohrRadius[semiconductor, #] &,
-			$DielectricConstant   = QuantityMagnitude @ $DielectricConstant[semiconductor],
-
-			cylindricalQDDiameter = 2 distance, cylindricalQDLength = 10 distance,
-			realtiveMass, nonImpurityEnergy, impurityEnergy, axial, radial
-		},
-		
-		realtiveMass = 2 EffMass["Electron"]*EffMass["Heavy Hole"] / (EffMass["Electron"] + EffMass["Heavy Hole"]);
-
-		nonImpurityEnergy = First@eigensystem["Electron", "Axial"] + First@eigensystem["Electron", "Radial"];
-
-		impurityEnergy = - $JouleToEV[ElectronChargeSI^2 / (4 * Pi * $DielectricConstant * VacuumPremittivitySI * Radius["Electron"])];
-
-		axial = $JouleToEV[PlanckConstantSI^2/(realtiveMass * Radius["Electron"]^2 * (0.5 cylindricalQDDiameter)^2)];
-
-		radial = $JouleToEV[PlanckConstantSI^2/(realtiveMass * Radius["Electron"]^2 * cylindricalQDLength^2)];
-
-		impurityEnergy = nonImpurityEnergy + axial + radial + impurityEnergy;
-
-		<|
-			"Without impurity energy" -> nonImpurityEnergy,
-			"With impurity energy"    -> impurityEnergy,
-			"Binding energy"          -> nonImpurityEnergy - impurityEnergy
-		|>	
-	];
-CylindricalQDsWithDoubleMorseImpurityHeisenberg[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`CylindricalQDsWithDoubleMorseImpurityHeisenberg"];
 
 End[];
 EndPackage[];

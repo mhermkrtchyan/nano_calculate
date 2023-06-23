@@ -2,35 +2,27 @@ BeginPackage["Tool`Thermodynamics`"];
 
 Block[{$ContextPath}, Needs["GeneralUtilities`"];];
 
-ClearAll[GetThermodynamicParameter];
-GeneralUtilities`SetUsage[GetThermodynamicParameter,
+ClearAll[ThermodynamicParameter];
+GeneralUtilities`SetUsage[ThermodynamicParameter,
 "GetThermodynamicParameter[Model$, Characteristic$]
-	This function gives programmatically acses to thermodynamic parameter temparature dependency.
-
-Arguments:
-| Model$   | Dataset with quantum dot eigensystem and other properties |
-| Characteristic$   | \"PartitionFunction\", \"MeanEnergy\", \"FreeEnergy\", \"Entropy\" or \"HeatCapacity\" |
-"
+	This function gives programmatically acses to thermodynamic parameter temparature dependency."
 ];
 
 Begin["`Private`"]
 
+(* Get Constants *)
 Needs["Tool`Constants`"];
-
 ClearAll[$$BoltzmannConstantSI];
 $$BoltzmannConstantSI      = Tool`Constants`Private`$$BoltzmannConstantSI;
 
+(* Get Helpers *)
 Needs["Tool`Helpers`"];
-
 ClearAll[$$FailureFunctionSignature, $JouleToEV];
 $$FailureFunctionSignature 	= Tool`Helpers`Private`$FailureFunctionSignature;
 $JouleToEV                  = Tool`Helpers`Private`$JouleToEV;
 
-(*
-	Get thermodynamics parameters
-*)
-
-GetThermodynamicParameter[Model_, Characteristic_] := 
+(* Thermodynamics Parameters *)
+ThermodynamicParameter[Model_, Characteristic_] := 
 	Block[
 		{
 			BoltzmannConstantSI = QuantityMagnitude @ $$BoltzmannConstantSI,
@@ -97,7 +89,7 @@ GetThermodynamicParameter[Model_, Characteristic_] :=
 			]
 		]
 	];
-GetThermodynamicParameter[___] := $$FailureFunctionSignature["Dependencies`Private`GetThermodynamicParameter"];
+ThermodynamicParameter[___] := $$FailureFunctionSignature["Dependencies`Private`GetThermodynamicParameter"];
 
 End[];
 EndPackage[];

@@ -1,36 +1,24 @@
 BeginPackage["Tool`Semiconductors`"];
 Begin["`Private`"];
 
-(*
-	Get constants
-*)
-
+(* Get Constants *)
 Needs["Tool`Constants`"];
-
 ClearAll[$$ElectronMassSI, $$PlanckConstantSI, $$PlanckConstantCGS, $$ElectronChargeCGS];
 $$ElectronMassSI		= Tool`Constants`Private`$$ElectronMassSI;
 $$PlanckConstantSI		= Tool`Constants`Private`$$PlanckConstantSI;
 $$PlanckConstantCGS		= Tool`Constants`Private`$$PlanckConstantCGS;
 $$ElectronChargeCGS		= Tool`Constants`Private`$$ElectronChargeCGS;
 
-(*
-	Get helpers
-*)
-
+(* Get Helpers *)
 Needs["Tool`Helpers`"];
-
-ClearAll[$$FailureFunctionSignature];
+ClearAll[$$FailureFunctionSignature, $JouleToEV];
 $FailureFunctionSignature	= Tool`Helpers`Private`$FailureFunctionSignature;
+$JouleToEV					= Tool`Helpers`Private`$JouleToEV;
 
-ClearAll[$JouleToEV];
-$JouleToEV	= Tool`Helpers`Private`$JouleToEV;
-
-(*
-	Semiconductor parameters
-*)
+(* Semiconductor Parameters *)
 
 ClearAll[$GapEnergy];
-$GapEnergy[semiconductor_?StringQ, temperature_?NumberQ] :=
+$GapEnergy[semiconductor_, temperature_] :=
 	Switch[semiconductor,
 		"InAs",
 		Quantity[0.415 - 2.76*10^-4*temperature^2/(temperature+83)									, "Electronvolts"]
@@ -56,7 +44,7 @@ $GapEnergy[semiconductor_?StringQ, temperature_?NumberQ] :=
 $GapEnergy[___] := $FailureFunctionSignature["Tool`Semiconductors`Private`$GapEnergy"];
 
 ClearAll[$Linewidth];
-$Linewidth[semiconductor_?StringQ, temperature_?NumberQ] :=
+$Linewidth[semiconductor_, temperature_] :=
 	Switch[semiconductor,
 		"InAs",
 		0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2
@@ -70,7 +58,7 @@ $Linewidth[semiconductor_?StringQ, temperature_?NumberQ] :=
 $Linewidth[___] := $FailureFunctionSignature["Tool`Semiconductors`Private`$Linewidth"];
 
 ClearAll[$DielectricConstant];
-$DielectricConstant[semiconductor_?StringQ] :=
+$DielectricConstant[semiconductor_] :=
 	Switch[semiconductor,
 		"InAs",
 		15.5
@@ -96,7 +84,7 @@ $DielectricConstant[semiconductor_?StringQ] :=
 $DielectricConstant[___] := $FailureFunctionSignature["Tool`Semiconductors`Private`$DielectricConstant"];
 
 ClearAll[$EffectiveMass];
-$EffectiveMass[semiconductor_?StringQ, particle_?StringQ] :=
+$EffectiveMass[semiconductor_, particle_] :=
 	Switch[{semiconductor, particle},
 		{"InAs", "Electron"},
 		0.023*$$ElectronMassSI
@@ -164,7 +152,7 @@ $EffectiveMass[semiconductor_?StringQ, particle_?StringQ] :=
 $EffectiveMass[___] := $FailureFunctionSignature["Tool`Semiconductors`Private`$EffectiveMass"];
 
 ClearAll[$BohrRadius];
-$BohrRadius[semiconductor_?StringQ, particle_?StringQ] :=
+$BohrRadius[semiconductor_, particle_] :=
 	Block[
 		{
 			PlanckConstantCGS 	= QuantityMagnitude @ $$PlanckConstantCGS,
@@ -183,7 +171,7 @@ $BohrRadius[semiconductor_?StringQ, particle_?StringQ] :=
 $BohrRadius[___] := $FailureFunctionSignature["Tool`Semiconductors`Private`$BohrRadius"];
 
 ClearAll[$RydbergEnergy];
-$RydbergEnergy[semiconductor_?StringQ, particle_?StringQ] :=
+$RydbergEnergy[semiconductor_, particle_] :=
 	Block[
 		{
 			PlanckConstantSI 	= QuantityMagnitude @ $$PlanckConstantSI,

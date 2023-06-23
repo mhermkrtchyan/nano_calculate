@@ -1,125 +1,16 @@
 BeginPackage["Tool`Helpers`"];
 Begin["`Private`"];
 
-(*
-	Failures
-*)
-
-ClearAll[$FailureFunctionSignature, $FailureQuantumNumber];
+(* Failures and Directories *)
+ClearAll[$FailureFunctionSignature, $FailureQuantumNumber, $$ToolDir];
 $FailureFunctionSignature	:= Failure["Use "<> "?" <> ToString[#] , "Wrong Function Call"] &;
-$FailureQuantumNumber 		:= Failure["Possible values: [" <> ToString[#1] <> ", " <> ToString[#2] <> "]", "Wrong in " <> #3] &;
+$FailureQuantumNumber 		:= Failure["Possible values: [" <> ToString[#1] <> ", " <> ToString[#2] <> "]", "Wrong in " <> #3] &
+$$ToolDir					 = FileNameJoin[{FileNameDrop[$InputFileName, -4]}];
 
-(*
-	Directories
-*)
-
-ClearAll[$$ToolDir, $$EigensystemDir];
-$$ToolDir = FileNameJoin[{FileNameDrop[$InputFileName, -4]}];
-
-(*
-	Adapters
-*)
-
+(* Adapters *)
 ClearAll[$JouleToEV];
 $JouleToEV[value_] := value * 0.624*10^19;
 $JouleToEV[___] := $FailureFunctionSignature["Tool`Helpers`Private`$JouleToEV"];
-
-ClearAll[$ShowExportData];
-$ShowExportData[
-		showData_,
-		range_,
-		legends_,
-		{yAxisName_, yAxisDim_},
-		{xAxisName_, xAxisDim_},
-		describers_,
-		theme_,
-		style_,
-		{image_, imagePosition_},
-		export_
-	] := Block[
-	{
-		plot 
-	},
-	
-	plot = ListLinePlot[
-		showData
-		,
-		Frame -> True,
-		FrameStyle -> Directive[Black, Thick],
-		FrameLabel -> {
-			Style[xAxisName <> ", " <> xAxisDim, Italic, Bold, 20],
-			Style[yAxisName <> ", " <> yAxisDim, Italic, Bold, 20]
-		},
-		PlotRange -> range,
-		FrameTicksStyle -> Directive[Black, 20],
-		PlotStyle -> style,
-		PlotTheme -> theme,
-		PlotLegends -> Placed[
-			LineLegend[
-				# & /@ legends,
-				LegendFunction -> (
-					Framed[
-						#,
-						RoundingRadius -> 10,
-						Background -> Lighter[Gray, 0.95],
-						FrameMargins -> 2
-					] &
-				),
-				LabelStyle -> Directive[18, Black, Bold, FontFamily -> "Times"]
-			],
-			{Right, Center}
-		],
-		FillingStyle -> Directive[Gray, Dashed],
-		ImageSize -> {700, 500},
-		PlotRangePadding -> 0,
-		PlotRange -> All,
-		If[UnsameQ[image, False],
-			Epilog -> {
-				(
-					Text[
-						Framed[
-							Style[#[[1]], 18, Black, FontFamily -> "Times"],
-							RoundingRadius -> 5,
-							FrameMargins -> 2,
-							Background -> Lighter[Gray, 0.97]
-						],
-						Scaled[{0.5, 0.5}],
-						{#[[2]], #[[3]]}
-					] & /@ describers
-				),
-				Inset[image, imagePosition]
-			},
-			Epilog -> (
-				Text[
-					Framed[
-						Style[#[[1]], 18, Black, FontFamily -> "Times"],
-						RoundingRadius -> 5,
-						FrameMargins -> 2,
-						Background -> Lighter[Gray, 0.97]
-					],
-					Scaled[{0.5, 0.5}],
-					{#[[2]], #[[3]]}
-				] & /@ describers
-			)
-		]
-	];
-	
-	If[UnsameQ[export, False],
-		Export[
-			FileNameJoin[{NotebookDirectory[], export <> ".jpeg"}],
-			plot,
-			"JPEG",
-			ImageResolution -> 1000
-		]
-	];
-	
-	plot
-];
-$ShowExportData[___] := $FailureFunctionSignature["Tool`Helpers`Private`$ShowExportData"];
-
-(*
-	Mathematical functions
-*)
 
 ClearAll[$GaussDistribution];
 $GaussDistribution[value_] :=
@@ -142,6 +33,84 @@ $GaussDistribution[value_] :=
 	];
 $GaussDistribution[___] := $FailureFunctionSignature["Tool`Helpers`Private`$GaussDistribution"];
 
+ClearAll[$PlotResults2D];
+$PlotResults2D[showData_, range_, {yAxisName_, yAxisDim_}, {xAxisName_, xAxisDim_}, legends_, describers_, theme_, style_, {image_, imagePosition_}, export_] :=
+	Block[
+		{
+			plot 
+		},
+
+		plot = ListLinePlot[
+			showData
+			,
+			Frame -> True,
+			FrameStyle -> Directive[Black, Thick],
+			FrameLabel -> {
+				Style[xAxisName <> ", " <> xAxisDim, Italic, Bold, 20],
+				Style[yAxisName <> ", " <> yAxisDim, Italic, Bold, 20]
+			},
+			FrameTicksStyle -> Directive[Black, 20],
+			PlotRange -> range,
+			PlotRangePadding -> 0,
+			PlotStyle -> style,
+			PlotTheme -> theme,
+			PlotLegends -> Placed[
+				LineLegend[
+					# & /@ legends,
+					LegendFunction -> (
+						Framed[
+							#,
+							RoundingRadius -> 10,
+							Background -> Lighter[Gray, 0.95],
+							FrameMargins -> 2
+						] &
+					),
+					LabelStyle -> Directive[18, Black, Bold, FontFamily -> "Times"]
+				],
+				{Right, Center}
+			],
+			FillingStyle -> Directive[Gray, Dashed],
+			ImageSize -> {700, 500},
+			If[UnsameQ[image, False],
+				Epilog -> {
+					(
+						Text[
+							Framed[
+								Style[#[[1]], 18, Black, FontFamily -> "Times"],
+								RoundingRadius -> 5,
+								FrameMargins -> 2,
+								Background -> Lighter[Gray, 0.97]
+							],
+							Scaled[{0.5, 0.5}],
+							{#[[2]], #[[3]]}
+						] & /@ describers
+					),
+					Inset[image, imagePosition]
+				},
+				Epilog -> (
+					Text[
+						Framed[
+							Style[#[[1]], 18, Black, FontFamily -> "Times"],
+							RoundingRadius -> 5,
+							FrameMargins -> 2,
+							Background -> Lighter[Gray, 0.97]
+						],
+						Scaled[{0.5, 0.5}],
+						{#[[2]], #[[3]]}
+					] & /@ describers
+				)
+			]
+		];
+		
+		If[UnsameQ[export, False],
+			Export[FileNameJoin[{NotebookDirectory[], export <> ".jpeg"}], plot, "JPEG", ImageResolution -> 1000]
+		];
+
+		plot
+	];
+$PlotResults2D[___] := $FailureFunctionSignature["Tool`Helpers`Private`$PlotResults2D"];
+
+(* Palette *)
 ClearAll[CreateIPPalette];
 CreateIPPalette[] :=
 	CreatePalette[
