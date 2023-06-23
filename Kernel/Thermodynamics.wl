@@ -36,10 +36,10 @@ GetThermodynamicParameter[Model_, Characteristic_] :=
 			BoltzmannConstantSI = QuantityMagnitude @ $$BoltzmannConstantSI,
 			eigensystem, particlesNumber,
 			temperature, inverseTemperature,
-			partitionFunction, parameter
+			partitionFunction, parameter,
+			meanEnergy, heatCap
 		},
 
-		
 		With[
 			{
 				temperature = Global`temperature,
@@ -50,16 +50,25 @@ GetThermodynamicParameter[Model_, Characteristic_] :=
 			
 			particlesNumber = eigensystem["Property", "Particles"];
 
-			inverseTemperature = $JouleToEV[BoltzmannConstantSI * temperature]^-1;
-
 			partitionFunction = Times[
-				Exp[-inverseTemperature * eigensystem["Ground"]],
-				Sum[Exp[-inverseTemperature * eigensystem["CenterOfMass"]], {COMNumber, 0, Infinity}],
-				Power[
-					Sum[Exp[-inverseTemperature * eigensystem["Relative"]], {RelNumber, 0, Infinity}],
-					particlesNumber * (particlesNumber - 1)
-				]
+				1/Factorial[particlesNumber]
+				,
+				Times[
+					Exp[-inverseTemperature * eigensystem["Ground"]],
+					Sum[Exp[-inverseTemperature * eigensystem["CenterOfMass"]], {COMNumber, 0, Infinity}],
+					Sum[Exp[-inverseTemperature * eigensystem["Relative"]], {RelNumber, 0, Infinity}]
+				]^particlesNumber
 			];
+
+			meanEnergy = - D[Log[partitionFunction], inverseTemperature];
+
+			inverseTemperature = ($JouleToEV[BoltzmannConstantSI] * temperature)^-1;
+
+			heatCap = D[meanEnergy, temperature];
+
+			freeEnergy = - $JouleToEV[BoltzmannConstantSI] * temperature * Log[partitionFunction];
+
+			entropy = - D[freeEnergy, temperature];
 
 			parameter = Switch[Characteristic
 				,
@@ -67,30 +76,16 @@ GetThermodynamicParameter[Model_, Characteristic_] :=
 				partitionFunction
 				,
 				"MeanEnergy",
-				$JouleToEV[
-					BoltzmannConstantSI  * temperature^2 * D[Log @ partitionFunction, temperature]
-				] 
+				meanEnergy
 				,
 				"FreeEnergy",
-				-$JouleToEV[
-					BoltzmannConstantSI * temperature * Log @ partitionFunction
-				]
+				freeEnergy
 				,
 				"Entropy",
-				-D[
-					-$JouleToEV[
-						BoltzmannConstantSI * temperature * Log @ partitionFunction
-					],
-					temperature
-				]
+				entropy
 				,
 				"HeatCapacity",
-				D[
-					$JouleToEV[
-						BoltzmannConstantSI  * temperature^2 * D[Log @ partitionFunction, temperature]
-					],
-					temperature
-				] 
+				heatCap
 			];
 
 			ToExpression[

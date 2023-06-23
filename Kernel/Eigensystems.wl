@@ -33,11 +33,12 @@ $JouleToEV					= Tool`Helpers`Private`$JouleToEV;
 
 Needs["Tool`Semiconductors`"];
 
-ClearAll[$EffectiveMass, $BohrRadius, $RydbergEnergy, $DielectricConstant];
+ClearAll[$EffectiveMass, $BohrRadius, $RydbergEnergy, $DielectricConstant, $GapEnergy];
 $EffectiveMass			= Tool`Semiconductors`Private`$EffectiveMass;
 $BohrRadius				= Tool`Semiconductors`Private`$BohrRadius;
 $RydbergEnergy			= Tool`Semiconductors`Private`$RydbergEnergy;
 $DielectricConstant		= Tool`Semiconductors`Private`$DielectricConstant;
+$GapEnergy              = Tool`Semiconductors`Private`$GapEnergy;
 
 (*
 	Get confining potentials
@@ -243,7 +244,7 @@ StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D[Semiconductor_, Gas_, SemiAx
 			
 			centerOfMassEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * (COMNumber + 1/2)] &;
 		
-			relativeEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * Min @ Last @ Moshinsky[#] * (RelNumber + (ParticlesNumber - 1) / 2)] &;
+			relativeEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * Min @ Last @ Moshinsky[#] * ((ParticlesNumber-1)*RelNumber+(ParticlesNumber-1)/2)] &;
 
 			waveFunction = Times[
 				1/Sqrt[2^COMNumber * COMNumber!] * (1/Pi) ^ 0.25 * Exp[-Sqrt[ParticlesNumber]^2 * z^2 / 2] * HermiteH[COMNumber, Sqrt[ParticlesNumber] * z]
@@ -282,7 +283,7 @@ StronglyProlateEllipsoidalQuantumDotWithMoshinsky1D[___] := $$FailureFunctionSig
 	Asymmetric Biconvex Lens-Shaped Quantum Dot
 *)
 
-ClearAll[BiconvexLensQuantumDot];
+ClearAll[BiconvexLensQuantumDot, BiconvexLensQuantumDotWithPressure];
 BiconvexLensQuantumDot[Semiconductor_, Radiuses_, Heights_, {ElectricField_, MagneticField_}, {MagneticNumber_, RadialNumber_, AxialNumber_}] :=
 	Block[
 		{
@@ -290,7 +291,8 @@ BiconvexLensQuantumDot[Semiconductor_, Radiuses_, Heights_, {ElectricField_, Mag
 			ElectronChargeCGS 	= QuantityMagnitude @ $$ElectronChargeCGS,
 			SpeedOfLightSI 		= QuantityMagnitude @ $$SpeedOfLightSI,
 			EffectiveMass 		= QuantityMagnitude @ $EffectiveMass[Semiconductor, #] &,
-			BohrRadius 			= QuantityMagnitude @ $BohrRadius[Semiconductor, #] &
+			BohrRadius 			= QuantityMagnitude @ $BohrRadius[Semiconductor, #] &,
+			GapEnergy 			= QuantityMagnitude @ $GapEnergy[InitialState["Semiconductor"], temperature],
 			,
 			hB = Max @ Heights, hS = Min @ Heights, rB = Max @ Radiuses, rS = Min @ Radiuses
 			,
@@ -391,14 +393,14 @@ BiconvexLensQuantumDotWithMoshinsky2D[Semiconductor_, Gas_, radii_, heights_, In
 
 			groundEnergy =
 				$JouleToEV @ Divide[
-					ParticlesNumber * PlanckConstantSI^2,
+					2 * ParticlesNumber * PlanckConstantSI^2,
 					4 * EffectiveMass[#] * BohrRadius[#]^2 * Min @ heights^2
 				] &;
 			
 		
-			centerOfMassEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * (COMNumber + 1/2)] &;
+			centerOfMassEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * (2*COMNumber + 1)] &;
 		
-			relativeEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * Min @ Last @ Moshinsky[#] * (RelNumber + (ParticlesNumber - 1) / 2)] &;
+			relativeEnergy = $JouleToEV[PlanckConstantSI * First @ Moshinsky[#] * Min @ Last @ Moshinsky[#] * (2*(ParticlesNumber-1)*RelNumber+ParticlesNumber-1)] &;
 
 			waveFunction = Times[
 				1/Sqrt[2^COMNumber * COMNumber!] * (1/Pi) ^ 0.25 * Exp[-Sqrt[ParticlesNumber]^2 * z^2 / 2] * HermiteH[COMNumber, Sqrt[ParticlesNumber] * z]
@@ -431,7 +433,7 @@ BiconvexLensQuantumDotWithMoshinsky2D[Semiconductor_, Gas_, radii_, heights_, In
 			] & [Gas]
 		]
 	];
-BiconvexLensQuantumDot[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`BiconvexLensQuantumDot"];
+BiconvexLensQuantumDotWithMoshinsky2D[___] := $$FailureFunctionSignature["Tool`Eigensystems`Private`BiconvexLensQuantumDotWithMoshinsky2D"];
 
 (*
 	Vertical Coupled Quantum Dot  // Need To Edit

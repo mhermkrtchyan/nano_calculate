@@ -96,6 +96,19 @@ Arguments:
 "
 ];
 
+ClearAll[PhotoionisationCrossSection];
+GeneralUtilities`SetUsage[PhotoionisationCrossSection,
+"PhotoionisationCrossSection[InitialState$, FinalState$, Hole$, temperature$]
+    This function gives programmatically acses to photoionisation cross section from light energy dependency.
+
+Arguments:
+| InitialState$	| Transition first state |
+| FinalState$   | Transition final state |
+| Hole$   		| \"Light Hole\" or \"Heavy Hole\" |
+| temperature$  | Absolute temperature in Kelvins |
+"
+];
+
 Begin["`Private`"]
 
 (*
@@ -149,7 +162,7 @@ InterbandAbsorptionCoefficient[InitialState_, FinalState_, Hole_, temperature_] 
 			BoltzmannConstantSI = QuantityMagnitude @ $$BoltzmannConstantSI,
 			EffectiveMass 		= QuantityMagnitude @ $EffectiveMass[InitialState["Semiconductor"], #] &,
 			GapEnergy 			= QuantityMagnitude @ $GapEnergy[InitialState["Semiconductor"], temperature],
-			BohrRadius 			= QuantityMagnitude @ $BohrRadius[InitialState["Semiconductor"], #] &
+			BohrRadius 			= QuantityMagnitude @ $BohrRadius[InitialState["Semiconductor"], #] &,
 			Linewidth			= $Linewidth[InitialState["Semiconductor"], temperature]
 			,
 			ElectronModel, HoleModel, ElectronWaveFunction, HoleWaveFunction, ElectronEnergy, HoleEnergy,
@@ -231,10 +244,9 @@ PhotoluminescenceCoefficient[InitialState_, FinalState_, Hole_, temperature_] :=
 			Gap 				= QuantityMagnitude @ $GapEnergy[InitialState["Semiconductor"], temperature]
 		},
 
-		absorption = 
-			Simplify @ Plus @@ Map[
-				InterbandAbsorptionCoefficient[InitialState, FinalState, Hole, temperature]
-			];
+		absorption = Simplify @ Plus @@ Map[
+			InterbandAbsorptionCoefficient[InitialState, FinalState, Hole, temperature]
+		];
 
 		With[
 			{
@@ -313,7 +325,7 @@ IntrabandAbsorptionCoefficient[InitialState_, FinalState_, Particle_, temperatur
 			]
 		];
 
-		DeltaEnergy = Abs[Particle2Energy - Particle1Energy]  * 10^3;
+		DeltaEnergy = (Particle2Energy - Particle1Energy)  * 10^3;
 		
 		Chemicalpotential = - (Gap/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[Mass["Heavy Hole"] / Mass["Electron"]];
 		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
@@ -341,19 +353,23 @@ IntrabandAbsorptionCoefficient[InitialState_, FinalState_, Particle_, temperatur
 				LinearConstant * FermiDirac[Particle1Energy] * (1 - FermiDirac[Particle2Energy]),
 				LightEnergy * Linewidth *  MatrixElement12^2 / ((DeltaEnergy - LightEnergy)^2 + Linewidth^2)
 			];
+			LinearAbsorptionCoefficient = ToExpression[
+				StringReplace[ToString[LinearAbsorptionCoefficient, InputForm], "LightEnergy" -> "#"] <> "&"
+			];
 
 			NonLinearAbsorptionCoefficient = Times[
 				NonLinearConstant * FermiDirac[Particle1Energy] * (1 - FermiDirac[Particle2Energy]),
 				LightEnergy * Linewidth * MatrixElement12^4 / ((DeltaEnergy - LightEnergy)^2 + Linewidth^2)^2,
 				1 - ((MatrixElement22 - MatrixElement11)^2/(4 Abs[MatrixElement12]^2))*((3 DeltaEnergy^2 - 4*LightEnergy*DeltaEnergy + LightEnergy^2 - Linewidth^2)/(DeltaEnergy^2 + Linewidth^2))
 			];
-
-			TotalAbsorptionCoefficient = Simplify[LinearAbsorptionCoefficient + NonLinearAbsorptionCoefficient];
+			NonLinearAbsorptionCoefficient = ToExpression[
+				StringReplace[ToString[NonLinearAbsorptionCoefficient, InputForm], "LightEnergy" -> "#"] <> "&"
+			];
 
 			AssociationThread[
-				{"Linear", "Nonlinear", "Total"}
+				{"Linear", "Nonlinear"}
 				,
-				{LinearAbsorptionCoefficient, NonLinearAbsorptionCoefficient, TotalAbsorptionCoefficient}
+				{LinearAbsorptionCoefficient, NonLinearAbsorptionCoefficient}
 			]
 		]
 	];
@@ -452,18 +468,22 @@ ReflectiveIndexChange[InitialState_, FinalState_, Particle_, temperature_] :=
 				LinearConstant * FermiDirac[Particle1Energy] * (1 - FermiDirac[Particle2Energy]) * MatrixElement12^2,
 				(DeltaEnergy - LightEnergy) / ((DeltaEnergy - LightEnergy)^2 + Linewidth^2)
 			];
+			LinearAbsorptionCoefficient = ToExpression[
+				StringReplace[ToString[LinearAbsorptionCoefficient, InputForm], "LightEnergy" -> "#"] <> "&"
+			];
 
 			NonLinearAbsorptionCoefficient = Times[
 				NonLinearConstant * FermiDirac[Particle1Energy] * (1 - FermiDirac[Particle2Energy]),
 				MatrixElement12^2/((DeltaEnergy - LightEnergy)^2 + Linewidth^2)^2 (4 MatrixElement12^2 (DeltaEnergy-LightEnergy)-(MatrixElement22 - MatrixElement11)^2/(DeltaEnergy^2 + Linewidth^2) ((DeltaEnergy - LightEnergy) (DeltaEnergy (DeltaEnergy - LightEnergy) - Linewidth^2) - Linewidth^2 (2 DeltaEnergy - LightEnergy)))
 			];
-
-			TotalAbsorptionCoefficient = Simplify[LinearAbsorptionCoefficient + NonLinearAbsorptionCoefficient];
+			NonLinearAbsorptionCoefficient = ToExpression[
+				StringReplace[ToString[NonLinearAbsorptionCoefficient, InputForm], "LightEnergy" -> "#"] <> "&"
+			];
 
 			AssociationThread[
-				{"Linear", "Nonlinear", "Total"}
+				{"Linear", "Nonlinear"}
 				,
-				{LinearAbsorptionCoefficient, NonLinearAbsorptionCoefficient, TotalAbsorptionCoefficient}
+				{LinearAbsorptionCoefficient, NonLinearAbsorptionCoefficient}
 			]
 		]
 	];
@@ -490,7 +510,8 @@ SecondHarmonicGeneration[State1_, State2_, State3_, Particle_, temperature_] :=
 			Particle2Model, Particle2WaveFunction, Particle2Energy,
 			Particle3Model, Particle3WaveFunction, Particle3Energy,
 			MatrixElement12, MatrixElement13, MatrixElement23,
-			DeltaEnergy12, DeltaEnergy13, Chemicalpotential, FermiDirac
+			DeltaEnergy12, DeltaEnergy13, Chemicalpotential, FermiDirac,
+			LinearAbsorptionCoefficient
 		},
 
 		Particle1Model = State1[Particle];
@@ -554,9 +575,12 @@ SecondHarmonicGeneration[State1_, State2_, State3_, Particle_, temperature_] :=
 				LightEnergy = Global`LightEnergy
 			},
 
-			Times[
+			LinearAbsorptionCoefficient = Times[
 				LinearConstant * FermiDirac[Particle1Energy] * (1 - FermiDirac[Particle2Energy]) * (1 - FermiDirac[Particle3Energy]),
 				Abs[MatrixElement12 * MatrixElement13 *  MatrixElement23 / ((LightEnergy - DeltaEnergy12 - I*Linewidth) * (2*LightEnergy - DeltaEnergy13 - I*Linewidth))]
+			];
+			LinearAbsorptionCoefficient = ToExpression[
+				StringReplace[ToString[LinearAbsorptionCoefficient, InputForm], "LightEnergy" -> "#"] <> "&"
 			]
 		]
 	];
@@ -585,7 +609,8 @@ ThirdHarmonicGeneration[State1_, State2_, State3_, State4_, Particle_, temperatu
 			Particle3Model, Particle3WaveFunction, Particle3Energy,
 			Particle4Model, Particle4WaveFunction, Particle4Energy,
 			MatrixElement12, MatrixElement33, MatrixElement34, MatrixElement14,
-			DeltaEnergy12, DeltaEnergy13, DeltaEnergy14, Chemicalpotential, FermiDirac
+			DeltaEnergy12, DeltaEnergy13, DeltaEnergy14, Chemicalpotential, FermiDirac,
+			LinearAbsorptionCoefficient
 		},
 
 		Particle1Model = State1[Particle];
@@ -667,16 +692,86 @@ ThirdHarmonicGeneration[State1_, State2_, State3_, State4_, Particle_, temperatu
 				LightEnergy = Global`LightEnergy
 			},
 
-			Times[
+			LinearAbsorptionCoefficient = Times[
 				LinearConstant * FermiDirac[Particle1Energy] * (1 - FermiDirac[Particle2Energy]) * (1 - FermiDirac[Particle3Energy]) * (1 - FermiDirac[Particle4Energy]),
 				Abs @ Divide[
 					MatrixElement12 * MatrixElement23 *  MatrixElement34 * MatrixElement14,
 					(LightEnergy - DeltaEnergy12 - I*Linewidth) * (2*LightEnergy - DeltaEnergy13 - I*Linewidth) * (3*LightEnergy - DeltaEnergy14 - I*Linewidth)
 				]
+			];
+			LinearAbsorptionCoefficient = ToExpression[
+				StringReplace[ToString[LinearAbsorptionCoefficient, InputForm], "LightEnergy" -> "#"] <> "&"
 			]
 		]
 	];
 ThirdHarmonicGeneration[___] := $$FailureFunctionSignature["Dependencies`Private`ThirdHarmonicGeneration"];
+
+(*
+	Photoionisation cross section
+*)
+
+PhotoionisationCrossSection[InitialState_, FinalState_, Hole_, temperature_] :=
+	Catch @ Block[
+		{
+			BoltzmannConstantSI = QuantityMagnitude @ $$BoltzmannConstantSI,
+			EffectiveMass 		= QuantityMagnitude @ $EffectiveMass[InitialState["Semiconductor"], #] &,
+			GapEnergy 			= QuantityMagnitude @ $GapEnergy[InitialState["Semiconductor"], temperature],
+			BohrRadius 			= QuantityMagnitude @ $BohrRadius[InitialState["Semiconductor"], #] &,
+			Linewidth			= $Linewidth[InitialState["Semiconductor"], temperature],
+			ElectronChargeSI	= QuantityMagnitude @ $$ElectronChargeSI,
+			SpeedOfLightSI    	= QuantityMagnitude @ $$SpeedOfLightSI,
+			PlanckConstantSI	= QuantityMagnitude @ $$PlanckConstantSI,
+			DielectricConstant 	= QuantityMagnitude @ $DielectricConstant[InitialState["Semiconductor"]],
+			InfraredRefractiveIndex = 3.51
+			,
+			ElectronModel, HoleModel, ElectronWaveFunction, HoleWaveFunction, ElectronEnergy, HoleEnergy,
+			MatrixElement, DeltaEnergy, Chemicalpotential, FermiDirac, finiteStructureConst
+		},
+
+		HoleModel = InitialState[Hole];
+		HoleWaveFunction = ReplaceAll[
+			HoleModel["Axial", "WaveFunction"] * HoleModel["Radial", "WaveFunction"],
+			Global`r -> Max[InitialState["Geometry", "Radial"]] * BohrRadius[Hole]
+		];
+		HoleEnergy = HoleModel["Axial", "Energy"] + HoleModel["Radial", "Energy"];
+
+		ElectronModel = FinalState["Electron"];
+		ElectronWaveFunction = ReplaceAll[
+			ElectronModel["Axial", "WaveFunction"] * ElectronModel["Radial", "WaveFunction"],
+			Global`r -> Max[FinalState["Geometry", "Radial"]] * BohrRadius["Electron"]
+		];
+		ElectronEnergy = ElectronModel["Axial", "Energy"] + ElectronModel["Radial", "Energy"];
+
+		MatrixElement = Abs @ Integrate[
+			2*Pi * HoleWaveFunction * ElectronWaveFunction,
+			Prepend[
+				InitialState["Geometry", "Axial"],
+				Global`z
+			]
+		];
+
+		finiteStructureConst = ElectronChargeSI^2 / (PlanckConstantSI * SpeedOfLightSI);
+
+		DeltaEnergy = (ElectronEnergy + HoleEnergy + GapEnergy)  * 10^3;
+		
+		Chemicalpotential = - (GapEnergy/2) + (3/4) * $JouleToEV[BoltzmannConstantSI * temperature] * Log[EffectiveMass["Heavy Hole"] / EffectiveMass["Electron"]];
+		FermiDirac = 1 / (1 + Exp[(# - Chemicalpotential) / $JouleToEV[BoltzmannConstantSI * temperature]]) &;
+		
+		With[
+			{
+				LightEnergy = Global`LightEnergy
+			},
+			
+			Times[
+				FermiDirac[ElectronEnergy] * (1 - FermiDirac[HoleEnergy]),
+				InfraredRefractiveIndex/DielectricConstant,
+				finiteStructureConst * 4 * Pi^3 / 3,
+				LightEnergy * Linewidth / ((LightEnergy - DeltaEnergy)^2 + Linewidth^2),
+				MatrixElement^2
+			]
+		]
+	];
+PhotoionisationCrossSection[___] := $$FailureFunctionSignature["Dependencies`Private`PhotoionisationCrossSection"];
 
 (*
 	Ensemble Effects // Need To Edit

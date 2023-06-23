@@ -59,10 +59,13 @@ ClearAll[$Linewidth];
 $Linewidth[semiconductor_?StringQ, temperature_?NumberQ] :=
 	Switch[semiconductor,
 		"InAs",
-		0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2 
+		0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2
+		,	
+		"GaAs",
+		0.1 + 0.0013487663304156054 * temperature + 0.00004994855667640969 * temperature^2
 		,
 		"GeSi",
-		1.459 * (1 + 2/(Exp[320/temperature] - 1)) 
+		9.338 * (1 + 2/(Exp[482/temperature] - 1))
 	];
 $Linewidth[___] := $FailureFunctionSignature["Tool`Semiconductors`Private`$Linewidth"];
 
